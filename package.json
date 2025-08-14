@@ -1,0 +1,554 @@
+{
+  "name": "ruv-swarm-vscode",
+  "displayName": "RUV-Swarm AI Assistant",
+  "description": "Offline AI development assistance with neural swarm intelligence",
+  "version": "0.1.0",
+  "publisher": "ruv-team",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Debuggers",
+    "Testing"
+  ],
+  "keywords": [
+    "ai",
+    "neural-network",
+    "swarm",
+    "code-analysis",
+    "machine-learning",
+    "offline",
+    "ruv-swarm"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ruv-swarm.initializeSwarm",
+        "title": "Initialize AI Swarm",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.spawnCodingAgent",
+        "title": "Spawn Coding Agent",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.analyzeCurrentFile",
+        "title": "Analyze Current File",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.generateTests",
+        "title": "Generate Tests",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.codeReview",
+        "title": "Code Review",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.optimizePerformance",
+        "title": "Optimize Performance",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.securityAnalysis",
+        "title": "Security Analysis",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.explainCode",
+        "title": "Explain Code",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.refactorCode",
+        "title": "Refactor Code",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.monitorSwarm",
+        "title": "Monitor Swarm",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.benchmarkPerformance",
+        "title": "Benchmark Performance",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.openDashboard",
+        "title": "Open Dashboard",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.validateCLI",
+        "title": "Validate CLI Environment",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.clearCache",
+        "title": "Clear Cache",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.showErrorReports",
+        "title": "Show Error Reports",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.batchAnalyzeWorkspace",
+        "title": "Batch Analyze Workspace",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.batchGenerateTests",
+        "title": "Batch Generate Tests",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.showCommandQueue",
+        "title": "Show Command Queue",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.pauseQueue",
+        "title": "Pause Command Queue",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.resumeQueue",
+        "title": "Resume Command Queue",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.clearQueue",
+        "title": "Clear Command Queue",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.startMcpServer",
+        "title": "Start MCP Server",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.connectMcpServer",
+        "title": "Connect MCP Server",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.mcpServerStatus",
+        "title": "MCP Server Status",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.mcpToolsList",
+        "title": "List MCP Tools",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.mcpResourcesList",
+        "title": "List MCP Resources",
+        "category": "RUV-Swarm"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "ruv-swarm.initializeSwarm",
+        "key": "ctrl+shift+a i",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "ruv-swarm.spawnCodingAgent",
+        "key": "ctrl+shift+a c",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "ruv-swarm.analyzeCurrentFile",
+        "key": "ctrl+shift+a r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ruv-swarm.generateTests",
+        "key": "ctrl+shift+a t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ruv-swarm.codeReview",
+        "key": "ctrl+shift+a v",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "ruv-swarm.optimizePerformance",
+        "key": "ctrl+shift+a o",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ruv-swarm.securityAnalysis",
+        "key": "ctrl+shift+a s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ruv-swarm.explainCode",
+        "key": "ctrl+shift+a e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ruv-swarm.refactorCode",
+        "key": "ctrl+shift+a f",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ruv-swarm.monitorSwarm",
+        "key": "ctrl+shift+a m",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "ruv-swarm.benchmarkPerformance",
+        "key": "ctrl+shift+a b",
+        "when": "!terminalFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "ruv-swarm.analyzeCurrentFile",
+          "group": "ruv-swarm@1",
+          "when": "editorHasSelection || editorTextFocus"
+        },
+        {
+          "command": "ruv-swarm.generateTests",
+          "group": "ruv-swarm@2",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "ruv-swarm.explainCode",
+          "group": "ruv-swarm@3",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ruv-swarm.refactorCode",
+          "group": "ruv-swarm@4",
+          "when": "editorTextFocus"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "ruv-swarm.codeReview",
+          "group": "ruv-swarm@1",
+          "when": "resourceExtname =~ /\\.(js|ts|jsx|tsx|py|rs|go|java|cs|php|rb|cpp|c|h)$/"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "ruv-swarm.initializeSwarm",
+          "when": "true"
+        },
+        {
+          "command": "ruv-swarm.openDashboard",
+          "when": "true"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "RUV-Swarm",
+      "properties": {
+        "ruv-swarm.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable RUV-Swarm AI assistance"
+        },
+        "ruv-swarm.autoInitialize": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically initialize swarm on workspace open"
+        },
+        "ruv-swarm.defaultTopology": {
+          "type": "string",
+          "enum": [
+            "hierarchical",
+            "mesh",
+            "ring",
+            "star"
+          ],
+          "default": "hierarchical",
+          "description": "Default swarm topology"
+        },
+        "ruv-swarm.maxAgents": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "maximum": 32,
+          "description": "Maximum number of agents in swarm"
+        },
+        "ruv-swarm.cognitivePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "convergent",
+              "divergent",
+              "systems",
+              "critical",
+              "lateral",
+              "abstract",
+              "hybrid"
+            ]
+          },
+          "default": [
+            "convergent",
+            "divergent",
+            "systems",
+            "critical"
+          ],
+          "description": "Enabled cognitive patterns"
+        },
+        "ruv-swarm.autoAnalyze": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "onSave": {
+              "type": "boolean",
+              "default": true
+            },
+            "onOpen": {
+              "type": "boolean",
+              "default": false
+            },
+            "debounceMs": {
+              "type": "number",
+              "default": 2000
+            }
+          },
+          "default": {
+            "enabled": true,
+            "onSave": true,
+            "onOpen": false,
+            "debounceMs": 2000
+          },
+          "description": "Auto-analysis settings"
+        },
+        "ruv-swarm.fileWatcher": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "patterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "**/*.js",
+                "**/*.ts",
+                "**/*.jsx",
+                "**/*.tsx",
+                "**/*.py",
+                "**/*.rs",
+                "**/*.go",
+                "**/*.java",
+                "**/*.cs"
+              ]
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "**/node_modules/**",
+                "**/target/**",
+                "**/build/**",
+                "**/dist/**"
+              ]
+            }
+          },
+          "default": {
+            "enabled": true,
+            "patterns": [
+              "**/*.js",
+              "**/*.ts",
+              "**/*.jsx",
+              "**/*.tsx",
+              "**/*.py",
+              "**/*.rs",
+              "**/*.go",
+              "**/*.java",
+              "**/*.cs"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "**/target/**",
+              "**/build/**",
+              "**/dist/**"
+            ]
+          },
+          "description": "File watcher configuration"
+        },
+        "ruv-swarm.terminal": {
+          "type": "object",
+          "properties": {
+            "showOutput": {
+              "type": "boolean",
+              "default": true
+            },
+            "clearOnRun": {
+              "type": "boolean",
+              "default": false
+            },
+            "focusOnRun": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "default": {
+            "showOutput": true,
+            "clearOnRun": false,
+            "focusOnRun": true
+          },
+          "description": "Terminal output settings"
+        },
+        "ruv-swarm.mcp": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "autoConnect": {
+              "type": "boolean",
+              "default": true
+            },
+            "servers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "transport": {
+                    "type": "object"
+                  },
+                  "autoStart": {
+                    "type": "boolean"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "priority": {
+                    "type": "number"
+                  }
+                }
+              },
+              "default": []
+            },
+            "defaultTimeout": {
+              "type": "number",
+              "default": 30000
+            },
+            "retryAttempts": {
+              "type": "number",
+              "default": 3
+            },
+            "retryDelay": {
+              "type": "number",
+              "default": 1000
+            }
+          },
+          "default": {
+            "enabled": true,
+            "autoConnect": true,
+            "servers": [],
+            "defaultTimeout": 30000,
+            "retryAttempts": 3,
+            "retryDelay": 1000
+          },
+          "description": "MCP (Model Context Protocol) integration settings"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ruv-swarm",
+          "title": "RUV-Swarm",
+          "icon": "$(brain)"
+        }
+      ]
+    },
+    "views": {
+      "ruv-swarm": [
+        {
+          "id": "ruv-swarm.swarmStatus",
+          "name": "Swarm Status",
+          "when": "ruv-swarm.enabled"
+        },
+        {
+          "id": "ruv-swarm.activeAgents",
+          "name": "Active Agents",
+          "when": "ruv-swarm.enabled"
+        },
+        {
+          "id": "ruv-swarm.recentAnalysis",
+          "name": "Recent Analysis",
+          "when": "ruv-swarm.enabled"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "18.x",
+    "@types/ws": "^8.5.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "eslint": "^8.47.0",
+    "typescript": "^5.1.6",
+    "@vscode/test-electron": "^2.3.4",
+    "@vscode/vsce": "^2.19.0"
+  },
+  "dependencies": {
+    "uuid": "^9.0.1",
+    "ws": "^8.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruvnet/ruv-FANN.git",
+    "directory": "vscode_extension"
+  },
+  "bugs": {
+    "url": "https://github.com/ruvnet/ruv-FANN/issues"
+  },
+  "homepage": "https://github.com/ruvnet/ruv-FANN#readme",
+  "license": "MIT OR Apache-2.0",
+  "author": ""
+}
