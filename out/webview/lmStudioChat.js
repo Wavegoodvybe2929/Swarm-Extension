@@ -85,7 +85,9 @@ class LMStudioChat {
                     await this.handleUserMessage(message.content);
                     break;
                 case 'clearChat':
+                    this.outputChannel.appendLine('🗑️ Processing clearChat request...');
                     await this.clearChat();
+                    this.outputChannel.appendLine('✅ clearChat completed');
                     break;
                 case 'exportChat':
                     await this.exportChat();
@@ -324,9 +326,45 @@ What would you like me to help you with?`;
         };
     }
     async clearChat() {
-        this.chatHistory = [];
-        await this.updateChatUI();
-        this.outputChannel.appendLine('🗑️ Chat history cleared');
+        this.outputChannel.appendLine(`🗑️ Starting clearChat - current history length: ${this.chatHistory.length}`);
+        try {
+            // Clear the chat history
+            this.chatHistory = [];
+            this.outputChannel.appendLine('✅ Chat history array cleared');
+            // Force UI update with explicit empty state
+            await this.updateChatUI();
+            this.outputChannel.appendLine('✅ UI update sent');
+            // Send a confirmation message to the webview with force clear flag
+            if (this.chatPanel) {
+                await this.chatPanel.webview.postMessage({
+                    type: 'chatCleared',
+                    data: {
+                        timestamp: new Date().toISOString(),
+                        forceClear: true
+                    }
+                });
+                this.outputChannel.appendLine('✅ Chat cleared confirmation sent to webview');
+                // Also send a direct update with empty messages
+                await this.chatPanel.webview.postMessage({
+                    type: 'updateChat',
+                    data: {
+                        messages: [],
+                        isConnected: this.lmStudioServer.isConnected,
+                        isProcessing: false,
+                        timestamp: new Date().toISOString(),
+                        forceClear: true
+                    }
+                });
+                this.outputChannel.appendLine('✅ Direct empty update sent to webview');
+            }
+            this.outputChannel.appendLine('🎉 clearChat operation completed successfully');
+            // Show success message to user
+            vscode.window.showInformationMessage('Chat history cleared successfully!');
+        }
+        catch (error) {
+            this.outputChannel.appendLine(`❌ Error during clearChat: ${error}`);
+            vscode.window.showErrorMessage(`Failed to clear chat: ${error}`);
+        }
     }
     async exportChat() {
         const chatData = {
@@ -895,8 +933,28 @@ What would you like me to help you with?`;
                 }
 
                 function clearChat() {
+                    console.log('Clear chat button clicked');
                     if (confirm('Are you sure you want to clear the chat history?')) {
+                        console.log('User confirmed chat clear, sending message to backend');
+                        
+                        // Show loading state
+                        const clearBtn = document.getElementById('clearChatBtn');
+                        if (clearBtn) {
+                            clearBtn.textContent = '⏳ Clearing...';
+                            clearBtn.disabled = true;
+                        }
+                        
                         vscode.postMessage({ type: 'clearChat' });
+                        
+                        // Reset button after a short delay (will be updated when chat updates)
+                        setTimeout(() => {
+                            if (clearBtn) {
+                                clearBtn.textContent = '🗑️ Clear';
+                                clearBtn.disabled = false;
+                            }
+                        }, 1000);
+                    } else {
+                        console.log('User cancelled chat clear');
                     }
                 }
 

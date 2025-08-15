@@ -60,13 +60,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider, vscode.Disp
 
     private async handleMessage(data: any): Promise<void> {
         try {
+            this.outputChannel.appendLine(`📨 Received message: ${data.type}`);
+            
             switch (data.type) {
                 case 'sendMessage':
                     await this.handleUserMessage(data.content);
                     break;
                     
                 case 'clearChat':
+                    this.outputChannel.appendLine('🗑️ Processing clearChat request...');
                     await this.clearChat();
+                    this.outputChannel.appendLine('✅ clearChat completed');
                     break;
                     
                 case 'quickAction':
@@ -79,6 +83,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider, vscode.Disp
                     
                 case 'retryMessage':
                     await this.retryLastMessage();
+                    break;
+                    
+                case 'debug':
+                    this.outputChannel.appendLine(`🐛 Debug: ${data.message} (${data.timestamp})`);
                     break;
                     
                 default:
@@ -333,10 +341,55 @@ Provide helpful, concise responses and use tools when appropriate to assist with
     }
 
     private async clearChat(): Promise<void> {
-        this.chatHistory = [];
-        await this.updateChatUI();
-        await this.saveChatHistory();
-        this.outputChannel.appendLine('Chat history cleared');
+        this.outputChannel.appendLine(`🗑️ Starting clearChat - current history length: ${this.chatHistory.length}`);
+        
+        try {
+            // Clear the chat history
+            this.chatHistory = [];
+            this.outputChannel.appendLine('✅ Chat history array cleared');
+            
+            // Force UI update with explicit empty state
+            await this.updateChatUI();
+            this.outputChannel.appendLine('✅ UI update sent');
+            
+            // Save the cleared state
+            await this.saveChatHistory();
+            this.outputChannel.appendLine('✅ Chat history saved to globalState');
+            
+            // Send a confirmation message to the webview with force clear flag
+            if (this._view) {
+                await this._view.webview.postMessage({
+                    type: 'chatCleared',
+                    data: { 
+                        timestamp: new Date().toISOString(),
+                        forceClear: true
+                    }
+                });
+                this.outputChannel.appendLine('✅ Chat cleared confirmation sent to webview');
+                
+                // Also send a direct update with empty messages
+                await this._view.webview.postMessage({
+                    type: 'updateChat',
+                    data: {
+                        messages: [],
+                        isConnected: this.lmStudioServer.isConnected,
+                        isProcessing: false,
+                        timestamp: new Date().toISOString(),
+                        forceClear: true
+                    }
+                });
+                this.outputChannel.appendLine('✅ Direct empty update sent to webview');
+            }
+            
+            this.outputChannel.appendLine('🎉 clearChat operation completed successfully');
+            
+            // Show success message to user
+            vscode.window.showInformationMessage('Chat history cleared successfully!');
+            
+        } catch (error) {
+            this.outputChannel.appendLine(`❌ Error during clearChat: ${error}`);
+            vscode.window.showErrorMessage(`Failed to clear chat: ${error}`);
+        }
     }
 
     private async checkConnection(): Promise<void> {
@@ -867,31 +920,195 @@ Provide helpful, concise responses and use tools when appropriate to assist with
                 let currentData = null;
                 let isProcessing = false;
 
-                document.addEventListener('DOMContentLoaded', () => {
+                // Initialize immediately and also on DOMContentLoaded
+                function initializeChat() {
+                    console.log('🚀 Initializing chat interface...');
                     setupEventListeners();
-                });
+                    
+                    // Send initial debug message to backend
+                    console.log('📤 Sending initial debug message to backend');
+                    vscode.postMessage({ 
+                        type: 'debug',
+                        message: 'Chat interface initialized',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+                // Try to initialize immediately
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initializeChat);
+                } else {
+                    // DOM is already ready
+                    initializeChat();
+                }
 
                 function setupEventListeners() {
-                    // Header buttons
-                    document.getElementById('clearBtn').addEventListener('click', clearChat);
-
-                    // Chat input
-                    const chatInput = document.getElementById('chatInput');
-                    const sendBtn = document.getElementById('sendBtn');
-
-                    chatInput.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            sendMessage();
-                        }
+                    console.log('🔧 Setting up event listeners...');
+                    
+                    // Send debug info about DOM state
+                    vscode.postMessage({ 
+                        type: 'debug',
+                        message: \`DOM readyState: \${document.readyState}\`,
+                        timestamp: new Date().toISOString()
                     });
+                    
+                    // Add multiple attempts with increasing delays
+                    const attempts = [50, 100, 250, 500, 1000];
+                    
+                    attempts.forEach((delay, index) => {
+                        setTimeout(() => {
+                            console.log(\`🔄 Attempt \${index + 1} to setup event listeners (delay: \${delay}ms)\`);
+                            
+                            // Send debug message to backend
+                            vscode.postMessage({ 
+                                type: 'debug',
+                                message: \`Event listener setup attempt \${index + 1}\`,
+                                timestamp: new Date().toISOString()
+                            });
+                            
+                            // Header buttons
+                            const clearBtn = document.getElementById('clearBtn');
+                            console.log(\`🔍 Attempt \${index + 1} - Looking for clear button:\`, clearBtn);
+                            
+                            if (clearBtn) {
+                                // Check if listener is already attached
+                                const hasListener = clearBtn.onclick !== null || clearBtn.getAttribute('data-listener-attached') === 'true';
+                                console.log(\`🧪 Clear button found! Has listener: \${hasListener}\`);
+                                
+                                if (!hasListener) {
+                                    // Remove any existing listeners first
+                                    clearBtn.removeEventListener('click', clearChat);
+                                    
+                                    // Use multiple attachment methods for maximum compatibility
+                                    clearBtn.addEventListener('click', clearChat, { capture: false, passive: false });
+                                    clearBtn.onclick = clearChat; // Fallback method
+                                    clearBtn.setAttribute('data-listener-attached', 'true');
+                                    
+                                    console.log(\`✅ Clear button event listener attached on attempt \${index + 1}\`);
+                                    
+                                    // Send success message to backend
+                                    vscode.postMessage({ 
+                                        type: 'debug',
+                                        message: \`Clear button listener attached successfully on attempt \${index + 1}\`,
+                                        timestamp: new Date().toISOString()
+                                    });
+                                    
+                                    // Test the button immediately
+                                    console.log('🧪 Testing clear button accessibility...');
+                                    console.log('Button element:', clearBtn);
+                                    console.log('Button text:', clearBtn.textContent);
+                                    console.log('Button disabled:', clearBtn.disabled);
+                                    console.log('Button style display:', getComputedStyle(clearBtn).display);
+                                    console.log('Button style visibility:', getComputedStyle(clearBtn).visibility);
+                                    console.log('Button z-index:', getComputedStyle(clearBtn).zIndex);
+                                    console.log('Button pointer-events:', getComputedStyle(clearBtn).pointerEvents);
+                                    
+                                    // Check if button is actually clickable
+                                    const rect = clearBtn.getBoundingClientRect();
+                                    console.log('Button position:', {
+                                        top: rect.top,
+                                        left: rect.left,
+                                        width: rect.width,
+                                        height: rect.height,
+                                        visible: rect.width > 0 && rect.height > 0
+                                    });
+                                    
+                                    // Test click programmatically (but skip confirm dialog)
+                                    try {
+                                        console.log('🧪 Testing programmatic click...');
+                                        // Add a test flag to skip confirm dialog
+                                        window.testMode = true;
+                                        clearBtn.click();
+                                        window.testMode = false;
+                                        console.log('✅ Programmatic click succeeded');
+                                    } catch (error) {
+                                        console.error('❌ Programmatic click failed:', error);
+                                        vscode.postMessage({ 
+                                            type: 'debug',
+                                            message: \`Programmatic click error: \${error.message}\`,
+                                            timestamp: new Date().toISOString()
+                                        });
+                                    }
+                                    
+                                    // Add comprehensive event debugging
+                                    ['mousedown', 'mouseup', 'click', 'touchstart', 'touchend'].forEach(eventType => {
+                                        clearBtn.addEventListener(eventType, function(e) {
+                                            console.log(\`🖱️ \${eventType} event detected on clear button\`, e);
+                                            vscode.postMessage({ 
+                                                type: 'debug',
+                                                message: \`Clear button \${eventType} event detected\`,
+                                                timestamp: new Date().toISOString()
+                                            });
+                                        }, { capture: true, passive: false });
+                                    });
+                                    
+                                    // Add a direct onclick test
+                                    setTimeout(() => {
+                                        console.log('🧪 Testing direct onclick assignment...');
+                                        const originalOnclick = clearBtn.onclick;
+                                        console.log('Original onclick:', originalOnclick);
+                                        
+                                        // Test if onclick is working
+                                        if (typeof originalOnclick === 'function') {
+                                            console.log('✅ onclick is a function');
+                                        } else {
+                                            console.log('❌ onclick is not a function:', typeof originalOnclick);
+                                        }
+                                    }, 100);
+                                    
+                                } else {
+                                    console.log(\`⚠️ Clear button already has listener on attempt \${index + 1}\`);
+                                }
+                            } else {
+                                console.error(\`❌ Clear button not found on attempt \${index + 1}!\`);
+                                
+                                // List all buttons for debugging
+                                const allButtons = document.querySelectorAll('button');
+                                console.log(\`🔍 All buttons found on attempt \${index + 1}:\`, allButtons.length);
+                                allButtons.forEach((btn, btnIndex) => {
+                                    console.log(\`Button \${btnIndex}:\`, {
+                                        id: btn.id,
+                                        text: btn.textContent,
+                                        className: btn.className,
+                                        display: getComputedStyle(btn).display,
+                                        visibility: getComputedStyle(btn).visibility
+                                    });
+                                });
+                                
+                                // Send failure message to backend
+                                vscode.postMessage({ 
+                                    type: 'debug',
+                                    message: \`Clear button not found on attempt \${index + 1}. Found \${allButtons.length} buttons total.\`,
+                                    timestamp: new Date().toISOString()
+                                });
+                            }
 
-                    chatInput.addEventListener('input', () => {
-                        autoResizeTextarea(chatInput);
-                        updateSendButton();
+                            // Only setup chat input on first successful attempt
+                            if (index === 0) {
+                                const chatInput = document.getElementById('chatInput');
+                                const sendBtn = document.getElementById('sendBtn');
+
+                                if (chatInput && sendBtn) {
+                                    chatInput.addEventListener('keydown', (e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            sendMessage();
+                                        }
+                                    });
+
+                                    chatInput.addEventListener('input', () => {
+                                        autoResizeTextarea(chatInput);
+                                        updateSendButton();
+                                    });
+
+                                    sendBtn.addEventListener('click', sendMessage);
+                                    console.log('✅ Chat input event listeners attached');
+                                } else {
+                                    console.error('❌ Chat input elements not found!');
+                                }
+                            }
+                        }, delay);
                     });
-
-                    sendBtn.addEventListener('click', sendMessage);
                 }
 
                 function autoResizeTextarea(textarea) {
@@ -931,11 +1148,88 @@ Provide helpful, concise responses and use tools when appropriate to assist with
                     });
                 }
 
-                function clearChat() {
-                    if (confirm('Are you sure you want to clear the chat history?')) {
-                        vscode.postMessage({ type: 'clearChat' });
+                function clearChat(event) {
+                    console.log('🗑️ Clear chat button clicked');
+                    console.log('🔍 Event details:', event);
+                    
+                    // Prevent any default behavior or event bubbling
+                    if (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
                     }
+                    
+                    // Send debug message to backend immediately
+                    vscode.postMessage({ 
+                        type: 'debug',
+                        message: 'clearChat function called - click event reached the function!',
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Add debug info about current state
+                    console.log('Current chat state:', {
+                        currentData: currentData,
+                        messageCount: currentData ? currentData.messages.length : 'unknown',
+                        isProcessing: isProcessing,
+                        testMode: window.testMode
+                    });
+                    
+                    // Check if there are messages to clear
+                    const hasMessages = currentData && currentData.messages && currentData.messages.length > 0;
+                    
+                    if (!hasMessages && !window.testMode) {
+                        console.log('ℹ️ No messages to clear');
+                        vscode.postMessage({ 
+                            type: 'debug',
+                            message: 'No messages to clear - chat is already empty',
+                            timestamp: new Date().toISOString()
+                        });
+                        return;
+                    }
+                    
+                    console.log('✅ Proceeding with chat clear');
+                    
+                    // Send debug message to backend
+                    vscode.postMessage({ 
+                        type: 'debug',
+                        message: window.testMode ? 'Test mode clear proceeding' : 'Clear proceeding without confirmation',
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Show loading state
+                    const clearBtn = document.getElementById('clearBtn');
+                    if (clearBtn) {
+                        clearBtn.textContent = '⏳';
+                        clearBtn.disabled = true;
+                        clearBtn.title = 'Clearing chat...';
+                        console.log('🔄 Clear button state updated to loading');
+                    }
+                    
+                    // Immediately show empty state for better UX
+                    console.log('🚀 Immediately showing empty state for better UX');
+                    forceEmptyState();
+                    
+                    // Send clear message to backend
+                    console.log('📤 Sending clearChat message to backend');
+                    vscode.postMessage({ 
+                        type: 'clearChat',
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Fallback mechanism - ensure button is reset after 3 seconds
+                    setTimeout(() => {
+                        console.log('🔄 Fallback mechanism triggered - ensuring button reset');
+                        if (clearBtn) {
+                            clearBtn.textContent = '🗑️';
+                            clearBtn.disabled = false;
+                            clearBtn.title = 'Clear Chat';
+                            console.log('✅ Fallback button reset completed');
+                        }
+                    }, 3000);
                 }
+
+                // Make clearChat globally accessible for debugging
+                window.clearChat = clearChat;
 
                 function retryMessage() {
                     vscode.postMessage({ type: 'retryMessage' });
@@ -944,11 +1238,30 @@ Provide helpful, concise responses and use tools when appropriate to assist with
                 // Handle messages from extension
                 window.addEventListener('message', event => {
                     const message = event.data;
+                    console.log('📨 Received message from backend:', message.type, message);
                     
                     switch (message.type) {
                         case 'updateChat':
+                            console.log('🔄 Processing updateChat with', message.data.messages.length, 'messages');
                             updateChatDisplay(message.data);
                             break;
+                            
+                        case 'chatCleared':
+                            console.log('✅ Received chatCleared confirmation');
+                            // Force immediate UI update to empty state
+                            forceEmptyState();
+                            // Reset clear button
+                            const clearBtn = document.getElementById('clearBtn');
+                            if (clearBtn) {
+                                clearBtn.textContent = '🗑️';
+                                clearBtn.disabled = false;
+                                clearBtn.title = 'Clear Chat';
+                                console.log('✅ Clear button reset');
+                            }
+                            break;
+                            
+                        default:
+                            console.log('⚠️ Unknown message type from backend:', message.type);
                     }
                 });
 
@@ -976,9 +1289,11 @@ Provide helpful, concise responses and use tools when appropriate to assist with
                 }
 
                 function updateMessages(messages) {
+                    console.log('🔄 updateMessages called with', messages.length, 'messages');
                     const chatMessages = document.getElementById('chatMessages');
                     
                     if (messages.length === 0) {
+                        console.log('📭 No messages, showing empty state');
                         chatMessages.innerHTML = \`
                             <div class="empty-state">
                                 <h3>🤖 AI Assistant Ready</h3>
@@ -1008,6 +1323,23 @@ Provide helpful, concise responses and use tools when appropriate to assist with
                     
                     // Scroll to bottom
                     chatMessages.scrollTop = chatMessages.scrollHeight;
+                    console.log('✅ Messages updated, DOM innerHTML set');
+                }
+
+                function forceEmptyState() {
+                    console.log('🔄 forceEmptyState called - forcing UI to empty state');
+                    const chatMessages = document.getElementById('chatMessages');
+                    if (chatMessages) {
+                        chatMessages.innerHTML = \`
+                            <div class="empty-state">
+                                <h3>🤖 AI Assistant Ready</h3>
+                                <p>Ask me anything about your code, or use the quick actions above!</p>
+                            </div>
+                        \`;
+                        console.log('✅ Empty state forced');
+                    } else {
+                        console.error('❌ chatMessages element not found!');
+                    }
                 }
 
                 function renderMessage(message) {
