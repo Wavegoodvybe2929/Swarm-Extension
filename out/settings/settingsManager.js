@@ -648,6 +648,122 @@ class SettingsManager {
                 }
             }
         });
+        // LM Studio settings group
+        this.addSettingsGroup({
+            id: 'lmstudio',
+            title: 'LM Studio',
+            description: 'LM Studio integration and chat settings',
+            icon: '🤖',
+            order: 4,
+            settings: {
+                'lmstudio.enabled': {
+                    type: 'boolean',
+                    default: true,
+                    description: 'Enable LM Studio integration'
+                },
+                'lmstudio.connection.host': {
+                    type: 'string',
+                    default: 'localhost',
+                    description: 'LM Studio server host'
+                },
+                'lmstudio.connection.port': {
+                    type: 'number',
+                    default: 1234,
+                    minimum: 1,
+                    maximum: 65535,
+                    description: 'LM Studio server port'
+                },
+                'lmstudio.connection.apiKey': {
+                    type: 'string',
+                    default: '',
+                    description: 'LM Studio API key (optional)'
+                },
+                'lmstudio.connection.timeout': {
+                    type: 'number',
+                    default: 30000,
+                    minimum: 5000,
+                    maximum: 120000,
+                    description: 'Connection timeout in milliseconds'
+                },
+                'lmstudio.model.name': {
+                    type: 'string',
+                    default: 'gemma-3-4b',
+                    description: 'Default model name'
+                },
+                'lmstudio.model.temperature': {
+                    type: 'number',
+                    default: 0.7,
+                    minimum: 0.0,
+                    maximum: 2.0,
+                    description: 'Model temperature for response generation'
+                },
+                'lmstudio.model.maxTokens': {
+                    type: 'number',
+                    default: 2048,
+                    minimum: 100,
+                    maximum: 8192,
+                    description: 'Maximum tokens per response'
+                },
+                'lmstudio.model.contextWindow': {
+                    type: 'number',
+                    default: 8192,
+                    minimum: 1024,
+                    maximum: 32768,
+                    description: 'Model context window size'
+                },
+                'lmstudio.tools.enabledTools': {
+                    type: 'array',
+                    default: ['analyze', 'read', 'generate', 'explain', 'review', 'optimize'],
+                    description: 'Enabled swarm tools for LM Studio'
+                },
+                'lmstudio.tools.maxConcurrentCalls': {
+                    type: 'number',
+                    default: 3,
+                    minimum: 1,
+                    maximum: 10,
+                    description: 'Maximum concurrent tool calls'
+                },
+                'lmstudio.tools.toolTimeout': {
+                    type: 'number',
+                    default: 15000,
+                    minimum: 5000,
+                    maximum: 60000,
+                    description: 'Tool execution timeout in milliseconds'
+                },
+                'lmstudio.optimization.contextCompression': {
+                    type: 'boolean',
+                    default: true,
+                    description: 'Enable context compression for better performance'
+                },
+                'lmstudio.optimization.smartTruncation': {
+                    type: 'boolean',
+                    default: true,
+                    description: 'Enable smart context truncation'
+                },
+                'lmstudio.optimization.cacheResults': {
+                    type: 'boolean',
+                    default: true,
+                    description: 'Cache tool results for better performance'
+                },
+                'lmstudio.chat.autoConnect': {
+                    type: 'boolean',
+                    default: true,
+                    description: 'Automatically connect to LM Studio on startup'
+                },
+                'lmstudio.chat.showToolCalls': {
+                    type: 'boolean',
+                    default: true,
+                    description: 'Show tool call details in chat'
+                },
+                'lmstudio.chat.maxHistoryLength': {
+                    type: 'number',
+                    default: 50,
+                    minimum: 10,
+                    maximum: 200,
+                    description: 'Maximum chat history length'
+                }
+            }
+        });
     }
     async loadSettingsSchema() {
         // Load additional settings schema from configuration files

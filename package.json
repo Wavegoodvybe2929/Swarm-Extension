@@ -188,11 +188,16 @@
         "title": "AI Code Review",
         "category": "RUV-Swarm"
       },
-      {
-        "command": "ruv-swarm.showWorkflowHistory",
-        "title": "Show Workflow History",
-        "category": "RUV-Swarm"
-      }
+        {
+          "command": "ruv-swarm.showWorkflowHistory",
+          "title": "Show Workflow History",
+          "category": "RUV-Swarm"
+        },
+        {
+          "command": "ruv-swarm.openLMStudioChat",
+          "title": "Open LM Studio Chat",
+          "category": "RUV-Swarm"
+        }
     ],
     "keybindings": [
       {
@@ -549,13 +554,19 @@
                   "type": "number",
                   "default": 30000,
                   "description": "Connection timeout in milliseconds"
+                },
+                "autoConnect": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Automatically connect to LM Studio on extension startup"
                 }
               },
               "default": {
                 "host": "localhost",
                 "port": 1234,
                 "apiKey": "",
-                "timeout": 30000
+                "timeout": 30000,
+                "autoConnect": true
               },
               "description": "LM Studio connection settings"
             },
@@ -732,12 +743,18 @@
         {
           "id": "ruv-swarm",
           "title": "RUV-Swarm",
-          "icon": "$(brain)"
+          "icon": "$(lightbulb)"
         }
       ]
     },
     "views": {
       "ruv-swarm": [
+        {
+          "id": "ruv-swarm.chat",
+          "name": "AI Chat",
+          "type": "webview",
+          "when": "ruv-swarm.enabled"
+        },
         {
           "id": "ruv-swarm.swarmStatus",
           "name": "Swarm Status",

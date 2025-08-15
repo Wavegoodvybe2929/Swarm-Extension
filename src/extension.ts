@@ -11,6 +11,15 @@ import { CLIValidator } from './utils/cliValidator';
 import { ProgressManager } from './utils/progressManager';
 import { ErrorHandler } from './utils/errorHandler';
 import { BatchProcessor } from './commands/batchProcessor';
+import { LMStudioServer } from './mcp/servers/lmStudioServer';
+import { LMStudioChat } from './webview/lmStudioChat';
+import { ChatViewProvider } from './webview/chatViewProvider';
+import { SettingsManager } from './settings/settingsManager';
+import { ProfileManager } from './settings/profileManager';
+import { ValidationEngine } from './settings/validationEngine';
+import { SwarmStatusProvider } from './providers/swarmStatusProvider';
+import { ActiveAgentsProvider } from './providers/activeAgentsProvider';
+import { RecentAnalysisProvider } from './providers/recentAnalysisProvider';
 import { ExtensionConfig } from './types';
 
 let swarmManager: SwarmManager;
@@ -25,6 +34,15 @@ let cliValidator: CLIValidator;
 let progressManager: ProgressManager;
 let errorHandler: ErrorHandler;
 let batchProcessor: BatchProcessor;
+let lmStudioServer: LMStudioServer;
+let lmStudioChat: LMStudioChat;
+let chatViewProvider: ChatViewProvider;
+let settingsManager: SettingsManager;
+let profileManager: ProfileManager;
+let validationEngine: ValidationEngine;
+let swarmStatusProvider: SwarmStatusProvider;
+let activeAgentsProvider: ActiveAgentsProvider;
+let recentAnalysisProvider: RecentAnalysisProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('🧠 RUV-Swarm extension is now active!');
@@ -72,6 +90,80 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log('📊 DEBUG: Initializing EnhancedDashboard...');
         enhancedDashboard = new EnhancedDashboard(context, swarmManager, commandManager);
 
+        // Initialize settings components
+        console.log('📊 DEBUG: Initializing ValidationEngine...');
+        validationEngine = new ValidationEngine();
+        
+        console.log('📊 DEBUG: Initializing ProfileManager...');
+        profileManager = new ProfileManager(context);
+        
+        console.log('📊 DEBUG: Initializing SettingsManager...');
+        settingsManager = new SettingsManager(context, profileManager, validationEngine, errorHandler);
+        await settingsManager.initialize();
+
+        // Initialize LM Studio components
+        console.log('📊 DEBUG: Initializing LMStudioServer...');
+        lmStudioServer = new LMStudioServer(context, swarmManager);
+        
+        console.log('📊 DEBUG: Initializing LMStudioChat...');
+        lmStudioChat = new LMStudioChat(context, lmStudioServer, swarmManager);
+
+        console.log('📊 DEBUG: Initializing ChatViewProvider...');
+        chatViewProvider = new ChatViewProvider(context, lmStudioServer, swarmManager);
+
+        // Initialize tree data providers
+        console.log('📊 DEBUG: Initializing SwarmStatusProvider...');
+        swarmStatusProvider = new SwarmStatusProvider(swarmManager);
+        
+        console.log('📊 DEBUG: Initializing ActiveAgentsProvider...');
+        activeAgentsProvider = new ActiveAgentsProvider(swarmManager);
+        
+        console.log('📊 DEBUG: Initializing RecentAnalysisProvider...');
+        recentAnalysisProvider = new RecentAnalysisProvider(swarmManager);
+
+        // Auto-connect to LM Studio if configured
+        const lmStudioConfig = await settingsManager.getSetting('lmstudio.enabled', true);
+        const autoConnect = await settingsManager.getSetting('lmstudio.connection.autoConnect', true);
+        
+        if (lmStudioConfig && autoConnect) {
+            console.log('📊 DEBUG: Auto-connecting to LM Studio...');
+            try {
+                await lmStudioServer.connect();
+                console.log('📊 DEBUG: LM Studio connected successfully');
+                vscode.window.showInformationMessage('🤖 LM Studio connected successfully!');
+            } catch (error) {
+                console.log('📊 DEBUG: LM Studio auto-connect failed:', error);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                
+                // Show a more helpful error message
+                if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed')) {
+                    vscode.window.showWarningMessage(
+                        '🤖 LM Studio is not running. Please start LM Studio and load a model to use AI features.',
+                        'Open LM Studio Settings',
+                        'Try Connect Again'
+                    ).then(choice => {
+                        if (choice === 'Open LM Studio Settings') {
+                            vscode.commands.executeCommand('workbench.action.openSettings', 'ruv-swarm.lmstudio');
+                        } else if (choice === 'Try Connect Again') {
+                            vscode.commands.executeCommand('ruv-swarm.connectLMStudio');
+                        }
+                    });
+                } else {
+                    vscode.window.showErrorMessage(
+                        `🤖 Failed to connect to LM Studio: ${errorMessage}`,
+                        'Check Settings',
+                        'View Logs'
+                    ).then(choice => {
+                        if (choice === 'Check Settings') {
+                            vscode.commands.executeCommand('workbench.action.openSettings', 'ruv-swarm.lmstudio');
+                        } else if (choice === 'View Logs') {
+                            vscode.commands.executeCommand('workbench.action.toggleDevTools');
+                        }
+                    });
+                }
+            }
+        }
+
         // Add all managers to context subscriptions for proper cleanup
         context.subscriptions.push(
             errorHandler,
@@ -84,7 +176,13 @@ export async function activate(context: vscode.ExtensionContext) {
             batchProcessor,
             fileWatcher,
             webviewProvider,
-            enhancedDashboard
+            enhancedDashboard,
+            settingsManager,
+            profileManager,
+            validationEngine,
+            lmStudioServer,
+            lmStudioChat,
+            chatViewProvider
         );
 
         // Validate CLI environment
@@ -367,6 +465,129 @@ function registerCommands(context: vscode.ExtensionContext) {
             await commandQueue.clearQueue();
             vscode.window.showInformationMessage('🗑️ Command queue cleared');
         }),
+
+        // LM Studio commands
+        vscode.commands.registerCommand('ruv-swarm.openLMStudioChat', () => {
+            console.log('🎯 DEBUG: User executed command: openLMStudioChat');
+            return lmStudioChat.showChat();
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.connectLMStudio', async () => {
+            console.log('🎯 DEBUG: User executed command: connectLMStudio');
+            try {
+                await lmStudioServer.connect();
+                vscode.window.showInformationMessage('✅ Connected to LM Studio successfully!');
+            } catch (error) {
+                vscode.window.showErrorMessage(`❌ Failed to connect to LM Studio: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.disconnectLMStudio', async () => {
+            console.log('🎯 DEBUG: User executed command: disconnectLMStudio');
+            try {
+                await lmStudioServer.disconnect();
+                vscode.window.showInformationMessage('🔌 Disconnected from LM Studio');
+            } catch (error) {
+                vscode.window.showErrorMessage(`❌ Failed to disconnect from LM Studio: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.checkLMStudioConnection', async () => {
+            console.log('🎯 DEBUG: User executed command: checkLMStudioConnection');
+            const isConnected = lmStudioServer.isConnected;
+            const message = isConnected 
+                ? '✅ LM Studio is connected and ready!'
+                : '❌ LM Studio is not connected. Use "Connect to LM Studio" command to establish connection.';
+            
+            if (isConnected) {
+                vscode.window.showInformationMessage(message);
+            } else {
+                vscode.window.showWarningMessage(message, 'Connect Now').then(choice => {
+                    if (choice === 'Connect Now') {
+                        vscode.commands.executeCommand('ruv-swarm.connectLMStudio');
+                    }
+                });
+            }
+        }),
+
+        // Settings commands
+        vscode.commands.registerCommand('ruv-swarm.openSettings', () => {
+            console.log('🎯 DEBUG: User executed command: openSettings');
+            return settingsManager.showSettingsUI();
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.exportSettings', async () => {
+            console.log('🎯 DEBUG: User executed command: exportSettings');
+            try {
+                const settings = await settingsManager.exportSettings();
+                const uri = await vscode.window.showSaveDialog({
+                    defaultUri: vscode.Uri.file(`ruv-swarm-settings-${Date.now()}.json`),
+                    filters: {
+                        'JSON Files': ['json'],
+                        'All Files': ['*']
+                    }
+                });
+
+                if (uri) {
+                    await vscode.workspace.fs.writeFile(uri, Buffer.from(settings, 'utf8'));
+                    vscode.window.showInformationMessage('⚙️ Settings exported successfully!');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to export settings: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.importSettings', async () => {
+            console.log('🎯 DEBUG: User executed command: importSettings');
+            try {
+                const uris = await vscode.window.showOpenDialog({
+                    canSelectFiles: true,
+                    canSelectFolders: false,
+                    canSelectMany: false,
+                    filters: {
+                        'JSON Files': ['json'],
+                        'All Files': ['*']
+                    }
+                });
+
+                if (uris && uris[0]) {
+                    const content = await vscode.workspace.fs.readFile(uris[0]);
+                    const settingsJson = Buffer.from(content).toString('utf8');
+                    await settingsManager.importSettings(settingsJson);
+                    vscode.window.showInformationMessage('⚙️ Settings imported successfully!');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to import settings: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.resetSettings', async () => {
+            console.log('🎯 DEBUG: User executed command: resetSettings');
+            const choice = await vscode.window.showWarningMessage(
+                'Are you sure you want to reset all settings to defaults? This action cannot be undone.',
+                'Reset All Settings',
+                'Cancel'
+            );
+
+            if (choice === 'Reset All Settings') {
+                try {
+                    await settingsManager.resetAllSettings();
+                    vscode.window.showInformationMessage('🔄 All settings have been reset to defaults');
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to reset settings: ${error}`);
+                }
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.optimizeSettings', async () => {
+            console.log('🎯 DEBUG: User executed command: optimizeSettings');
+            try {
+                await settingsManager.optimizeSettings();
+                vscode.window.showInformationMessage('🔧 Settings optimized for your system!');
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to optimize settings: ${error}`);
+            }
+        }),
     ];
 
     // Add all commands to context subscriptions
@@ -382,6 +603,36 @@ function registerProviders(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider(
             'ruv-swarm.dashboard',
             webviewProvider
+        )
+    );
+
+    // Register chat view provider
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            ChatViewProvider.viewType,
+            chatViewProvider
+        )
+    );
+
+    // Register tree data providers for left panel views
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider(
+            'ruv-swarm.swarmStatus',
+            swarmStatusProvider
+        )
+    );
+
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider(
+            'ruv-swarm.activeAgents',
+            activeAgentsProvider
+        )
+    );
+
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider(
+            'ruv-swarm.recentAnalysis',
+            recentAnalysisProvider
         )
     );
 

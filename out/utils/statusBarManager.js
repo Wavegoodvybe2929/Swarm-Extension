@@ -58,7 +58,7 @@ class StatusBarManager {
         if (metrics) {
             this.metrics = { ...this.metrics, ...metrics };
         }
-        this.statusBarItem.text = `$(brain) ${text}`;
+        this.statusBarItem.text = `$(lightbulb) ${text}`;
         // Update tooltip and color based on status
         const tooltip = this.generateTooltip(status);
         this.statusBarItem.tooltip = tooltip;

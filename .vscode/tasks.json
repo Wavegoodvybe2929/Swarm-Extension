@@ -2,35 +2,81 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "npm",
-            "script": "watch",
+            "label": "watch",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "watch"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
             "presentation": {
-                "reveal": "never"
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
             }
         },
         {
-            "type": "npm",
-            "script": "compile",
+            "label": "compile",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "compile"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
             "problemMatcher": "$tsc",
-            "group": "build"
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            }
         },
         {
-            "type": "npm",
-            "script": "test",
+            "label": "test",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "test"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
             "problemMatcher": "$tsc",
-            "group": "test"
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            }
         },
         {
-            "type": "npm",
-            "script": "lint",
+            "label": "lint",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "lint"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
             "problemMatcher": "$eslint-stylish",
-            "group": "build"
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            }
         }
     ]
 }
