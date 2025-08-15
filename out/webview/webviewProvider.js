@@ -63,22 +63,41 @@ class WebviewProvider {
         });
     }
     async showDashboard() {
-        if (this.webviewView) {
-            this.webviewView.show(true);
-            await this.updateDashboard();
+        try {
+            console.log('🎛️ DEBUG: showDashboard called');
+            if (this.webviewView) {
+                console.log('🎛️ DEBUG: Using existing webview view');
+                this.webviewView.show(true);
+                await this.updateDashboard();
+            }
+            else {
+                console.log('🎛️ DEBUG: Creating new webview panel');
+                // Create a new webview panel if view is not available
+                const panel = vscode.window.createWebviewPanel('ruvSwarmDashboard', 'RUV-Swarm Dashboard', vscode.ViewColumn.Two, {
+                    enableScripts: true,
+                    localResourceRoots: [this.context.extensionUri],
+                    retainContextWhenHidden: true
+                });
+                console.log('🎛️ DEBUG: Setting webview HTML');
+                panel.webview.html = this.getDashboardHTML();
+                panel.webview.onDidReceiveMessage(async (message) => {
+                    console.log('🎛️ DEBUG: Received webview message:', message.type);
+                    await this.handleWebviewMessage(message);
+                });
+                // Handle panel disposal
+                panel.onDidDispose(() => {
+                    console.log('🎛️ DEBUG: Dashboard panel disposed');
+                });
+                console.log('🎛️ DEBUG: Updating dashboard data');
+                // Update dashboard data
+                await this.updateDashboardPanel(panel);
+                console.log('🎛️ DEBUG: Dashboard panel created and shown successfully');
+                vscode.window.showInformationMessage('📊 Dashboard opened successfully!');
+            }
         }
-        else {
-            // Create a new webview panel if view is not available
-            const panel = vscode.window.createWebviewPanel('ruvSwarmDashboard', 'RUV-Swarm Dashboard', vscode.ViewColumn.Two, {
-                enableScripts: true,
-                localResourceRoots: [this.context.extensionUri]
-            });
-            panel.webview.html = this.getDashboardHTML();
-            panel.webview.onDidReceiveMessage(async (message) => {
-                await this.handleWebviewMessage(message);
-            });
-            // Update dashboard data
-            await this.updateDashboardPanel(panel);
+        catch (error) {
+            console.error('🎛️ ERROR: Failed to show dashboard:', error);
+            vscode.window.showErrorMessage(`Failed to open dashboard: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
     async handleWebviewMessage(message) {

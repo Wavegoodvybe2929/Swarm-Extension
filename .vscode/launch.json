@@ -2,7 +2,30 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run Extension",
+            "name": "Run Extension (Debug Mode)",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--disable-extensions"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
+            "preLaunchTask": "${workspaceFolder}:npm: watch",
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "smartStep": true,
+            "showAsyncStacks": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "VSCODE_DEBUG_MODE": "true"
+            }
+        },
+        {
+            "name": "Run Extension (Production Mode)",
             "type": "extensionHost",
             "request": "launch",
             "args": [
@@ -11,7 +34,9 @@
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
             ],
-            "preLaunchTask": "${workspaceFolder}:npm: watch"
+            "preLaunchTask": "${workspaceFolder}:npm: compile",
+            "stopOnEntry": false,
+            "sourceMaps": true
         },
         {
             "name": "Extension Tests",
@@ -24,7 +49,19 @@
             "outFiles": [
                 "${workspaceFolder}/out/test/**/*.js"
             ],
-            "preLaunchTask": "npm: watch"
+            "preLaunchTask": "npm: watch",
+            "stopOnEntry": false,
+            "sourceMaps": true
+        },
+        {
+            "name": "Attach to Extension Host",
+            "type": "node",
+            "request": "attach",
+            "port": 5870,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ]
         }
     ]
 }

@@ -157,6 +157,41 @@
         "command": "ruv-swarm.mcpResourcesList",
         "title": "List MCP Resources",
         "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.connectLMStudio",
+        "title": "Connect to LM Studio",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.disconnectLMStudio",
+        "title": "Disconnect from LM Studio",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.configureLMModel",
+        "title": "Configure LM Studio Model",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.startAISession",
+        "title": "Start AI Coding Session",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.aiAnalyzeProject",
+        "title": "AI Project Analysis",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.aiCodeReview",
+        "title": "AI Code Review",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.showWorkflowHistory",
+        "title": "Show Workflow History",
+        "category": "RUV-Swarm"
       }
     ],
     "keybindings": [
@@ -483,6 +518,212 @@
             "retryDelay": 1000
           },
           "description": "MCP (Model Context Protocol) integration settings"
+        },
+        "ruv-swarm.lmstudio": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable LM Studio integration"
+            },
+            "connection": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "default": "localhost",
+                  "description": "LM Studio server host"
+                },
+                "port": {
+                  "type": "number",
+                  "default": 1234,
+                  "description": "LM Studio server port"
+                },
+                "apiKey": {
+                  "type": "string",
+                  "default": "",
+                  "description": "API key for LM Studio (if required)"
+                },
+                "timeout": {
+                  "type": "number",
+                  "default": 30000,
+                  "description": "Connection timeout in milliseconds"
+                }
+              },
+              "default": {
+                "host": "localhost",
+                "port": 1234,
+                "apiKey": "",
+                "timeout": 30000
+              },
+              "description": "LM Studio connection settings"
+            },
+            "model": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "default": "gemma-3-4b",
+                  "description": "Preferred model name (e.g., gemma-3-4b, llama-2-7b)"
+                },
+                "temperature": {
+                  "type": "number",
+                  "default": 0.7,
+                  "minimum": 0,
+                  "maximum": 2,
+                  "description": "Model temperature for creativity vs consistency"
+                },
+                "maxTokens": {
+                  "type": "number",
+                  "default": 2048,
+                  "minimum": 1,
+                  "maximum": 8192,
+                  "description": "Maximum tokens per response"
+                },
+                "contextWindow": {
+                  "type": "number",
+                  "default": 8192,
+                  "minimum": 1024,
+                  "maximum": 32768,
+                  "description": "Model context window size"
+                }
+              },
+              "default": {
+                "name": "gemma-3-4b",
+                "temperature": 0.7,
+                "maxTokens": 2048,
+                "contextWindow": 8192
+              },
+              "description": "Model configuration settings"
+            },
+            "tools": {
+              "type": "object",
+              "properties": {
+                "enabledTools": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["analyze", "read", "generate", "explain", "review", "optimize", "search", "workspace"]
+                  },
+                  "default": ["analyze", "read", "generate", "explain", "review", "optimize"],
+                  "description": "Enabled tool categories for AI model"
+                },
+                "maxConcurrentCalls": {
+                  "type": "number",
+                  "default": 3,
+                  "minimum": 1,
+                  "maximum": 10,
+                  "description": "Maximum concurrent tool calls"
+                },
+                "toolTimeout": {
+                  "type": "number",
+                  "default": 15000,
+                  "description": "Tool execution timeout in milliseconds"
+                }
+              },
+              "default": {
+                "enabledTools": ["analyze", "read", "generate", "explain", "review", "optimize"],
+                "maxConcurrentCalls": 3,
+                "toolTimeout": 15000
+              },
+              "description": "Tool execution settings"
+            },
+            "optimization": {
+              "type": "object",
+              "properties": {
+                "contextCompression": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Enable intelligent context compression for smaller models"
+                },
+                "smartTruncation": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Use smart truncation to fit context window"
+                },
+                "cacheResults": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Cache tool results to improve performance"
+                }
+              },
+              "default": {
+                "contextCompression": true,
+                "smartTruncation": true,
+                "cacheResults": true
+              },
+              "description": "Performance optimization settings"
+            }
+          },
+          "default": {
+            "enabled": true,
+            "connection": {
+              "host": "localhost",
+              "port": 1234,
+              "apiKey": "",
+              "timeout": 30000
+            },
+            "model": {
+              "name": "gemma-3-4b",
+              "temperature": 0.7,
+              "maxTokens": 2048,
+              "contextWindow": 8192
+            },
+            "tools": {
+              "enabledTools": ["analyze", "read", "generate", "explain", "review", "optimize"],
+              "maxConcurrentCalls": 3,
+              "toolTimeout": 15000
+            },
+            "optimization": {
+              "contextCompression": true,
+              "smartTruncation": true,
+              "cacheResults": true
+            }
+          },
+          "description": "LM Studio integration settings for local AI models"
+        },
+        "ruv-swarm.tools": {
+          "type": "object",
+          "properties": {
+            "enabledCategories": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["file-operations", "code-analysis", "project-navigation", "swarm-management", "workspace"]
+              },
+              "default": ["file-operations", "code-analysis", "project-navigation", "swarm-management"],
+              "description": "Enabled tool categories"
+            },
+            "maxFileSize": {
+              "type": "number",
+              "default": 1048576,
+              "description": "Maximum file size for reading (bytes)"
+            },
+            "maxSearchResults": {
+              "type": "number",
+              "default": 100,
+              "description": "Maximum search results to return"
+            },
+            "cacheTimeout": {
+              "type": "number",
+              "default": 300000,
+              "description": "Tool result cache timeout (milliseconds)"
+            },
+            "concurrentLimit": {
+              "type": "number",
+              "default": 5,
+              "description": "Maximum concurrent tool executions"
+            }
+          },
+          "default": {
+            "enabledCategories": ["file-operations", "code-analysis", "project-navigation", "swarm-management"],
+            "maxFileSize": 1048576,
+            "maxSearchResults": 100,
+            "cacheTimeout": 300000,
+            "concurrentLimit": 5
+          },
+          "description": "Swarm tools configuration"
         }
       }
     },

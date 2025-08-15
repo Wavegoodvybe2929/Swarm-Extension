@@ -5,6 +5,7 @@ import { DiagnosticsProvider } from './providers/diagnosticsProvider';
 import { StatusBarManager } from './utils/statusBarManager';
 import { FileWatcher } from './utils/fileWatcher';
 import { WebviewProvider } from './webview/webviewProvider';
+import { EnhancedDashboard } from './webview/enhancedDashboard';
 import { CommandQueue } from './commands/commandQueue';
 import { CLIValidator } from './utils/cliValidator';
 import { ProgressManager } from './utils/progressManager';
@@ -18,6 +19,7 @@ let diagnosticsProvider: DiagnosticsProvider;
 let statusBarManager: StatusBarManager;
 let fileWatcher: FileWatcher;
 let webviewProvider: WebviewProvider;
+let enhancedDashboard: EnhancedDashboard;
 let commandQueue: CommandQueue;
 let cliValidator: CLIValidator;
 let progressManager: ProgressManager;
@@ -26,24 +28,49 @@ let batchProcessor: BatchProcessor;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('🧠 RUV-Swarm extension is now active!');
+    console.log('📊 DEBUG: Extension activation started at:', new Date().toISOString());
+    console.log('📊 DEBUG: VSCode version:', vscode.version);
+    console.log('📊 DEBUG: Extension context globalState keys:', context.globalState.keys());
 
     try {
         // Initialize core managers in dependency order
+        console.log('📊 DEBUG: Initializing ErrorHandler...');
         errorHandler = new ErrorHandler();
+        
+        console.log('📊 DEBUG: Initializing ProgressManager...');
         progressManager = new ProgressManager();
+        
+        console.log('📊 DEBUG: Initializing CLIValidator...');
         cliValidator = new CLIValidator();
+        
+        console.log('📊 DEBUG: Initializing StatusBarManager...');
         statusBarManager = new StatusBarManager();
+        
+        console.log('📊 DEBUG: Initializing SwarmManager...');
         swarmManager = new SwarmManager(context);
+        
+        console.log('📊 DEBUG: Initializing DiagnosticsProvider...');
         diagnosticsProvider = new DiagnosticsProvider();
         
         // Initialize command queue and batch processor
+        console.log('📊 DEBUG: Initializing CommandQueue...');
         commandQueue = new CommandQueue(swarmManager, statusBarManager);
+        
+        console.log('📊 DEBUG: Initializing BatchProcessor...');
         batchProcessor = new BatchProcessor(swarmManager, progressManager, errorHandler, commandQueue);
         
         // Initialize command manager with enhanced capabilities
+        console.log('📊 DEBUG: Initializing CommandManager...');
         commandManager = new CommandManager(swarmManager, diagnosticsProvider, statusBarManager);
+        
+        console.log('📊 DEBUG: Initializing FileWatcher...');
         fileWatcher = new FileWatcher(swarmManager, diagnosticsProvider);
+        
+        console.log('📊 DEBUG: Initializing WebviewProvider...');
         webviewProvider = new WebviewProvider(context, swarmManager);
+        
+        console.log('📊 DEBUG: Initializing EnhancedDashboard...');
+        enhancedDashboard = new EnhancedDashboard(context, swarmManager, commandManager);
 
         // Add all managers to context subscriptions for proper cleanup
         context.subscriptions.push(
@@ -56,47 +83,65 @@ export async function activate(context: vscode.ExtensionContext) {
             commandQueue,
             batchProcessor,
             fileWatcher,
-            webviewProvider
+            webviewProvider,
+            enhancedDashboard
         );
 
         // Validate CLI environment
+        console.log('📊 DEBUG: Starting CLI validation...');
         try {
             const validationResult = await cliValidator.validateCLI();
+            console.log('📊 DEBUG: CLI validation result:', validationResult);
+            
             if (!validationResult.isAvailable) {
+                console.log('📊 DEBUG: CLI not available, showing warning message');
                 vscode.window.showWarningMessage(
                     'RUV-Swarm CLI not found. Some features may not work properly.',
                     'Install CLI',
                     'Learn More'
                 ).then(choice => {
+                    console.log('📊 DEBUG: User selected CLI warning option:', choice);
                     if (choice === 'Install CLI') {
                         vscode.env.openExternal(vscode.Uri.parse('https://github.com/ruvnet/ruv-FANN#installation'));
                     } else if (choice === 'Learn More') {
                         vscode.env.openExternal(vscode.Uri.parse('https://github.com/ruvnet/ruv-FANN/blob/main/vscode_extension/README.md'));
                     }
                 });
+            } else {
+                console.log('📊 DEBUG: CLI validation successful');
             }
         } catch (error) {
-            console.warn('CLI validation failed:', error);
+            console.warn('📊 DEBUG: CLI validation failed:', error);
         }
 
         // Register all commands
+        console.log('📊 DEBUG: Registering commands...');
         registerCommands(context);
 
         // Register providers
+        console.log('📊 DEBUG: Registering providers...');
         registerProviders(context);
 
         // Initialize file watcher
+        console.log('📊 DEBUG: Initializing file watcher...');
         await fileWatcher.initialize();
 
         // Auto-initialize swarm if configured
         const config = getExtensionConfig();
+        console.log('📊 DEBUG: Extension configuration:', config);
+        
         if (config.autoInitialize && vscode.workspace.workspaceFolders) {
+            console.log('📊 DEBUG: Auto-initializing swarm...');
             await initializeSwarmWithDelay();
+        } else {
+            console.log('📊 DEBUG: Skipping auto-initialization - autoInitialize:', config.autoInitialize, 'workspaceFolders:', !!vscode.workspace.workspaceFolders);
         }
 
         // Set context for when extension is enabled
+        console.log('📊 DEBUG: Setting extension context...');
         vscode.commands.executeCommand('setContext', 'ruv-swarm.enabled', true);
 
+        console.log('📊 DEBUG: Extension activation completed successfully');
         vscode.window.showInformationMessage('🧠 RUV-Swarm AI Assistant is ready!');
 
     } catch (error) {
@@ -135,55 +180,91 @@ export function deactivate() {
 function registerCommands(context: vscode.ExtensionContext) {
     const commands = [
         // Core swarm commands
-        vscode.commands.registerCommand('ruv-swarm.initializeSwarm', () => 
-            commandManager.initializeSwarm()),
+        vscode.commands.registerCommand('ruv-swarm.initializeSwarm', () => {
+            console.log('🎯 DEBUG: User executed command: initializeSwarm');
+            return commandManager.initializeSwarm();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.spawnCodingAgent', () => 
-            commandManager.spawnCodingAgent()),
+        vscode.commands.registerCommand('ruv-swarm.spawnCodingAgent', () => {
+            console.log('🎯 DEBUG: User executed command: spawnCodingAgent');
+            return commandManager.spawnCodingAgent();
+        }),
         
         // Analysis commands
-        vscode.commands.registerCommand('ruv-swarm.analyzeCurrentFile', () => 
-            commandManager.analyzeCurrentFile()),
+        vscode.commands.registerCommand('ruv-swarm.analyzeCurrentFile', () => {
+            console.log('🎯 DEBUG: User executed command: analyzeCurrentFile');
+            const activeEditor = vscode.window.activeTextEditor;
+            console.log('🎯 DEBUG: Active editor file:', activeEditor?.document.fileName);
+            return commandManager.analyzeCurrentFile();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.generateTests', () => 
-            commandManager.generateTests()),
+        vscode.commands.registerCommand('ruv-swarm.generateTests', () => {
+            console.log('🎯 DEBUG: User executed command: generateTests');
+            return commandManager.generateTests();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.codeReview', () => 
-            commandManager.codeReview()),
+        vscode.commands.registerCommand('ruv-swarm.codeReview', () => {
+            console.log('🎯 DEBUG: User executed command: codeReview');
+            return commandManager.codeReview();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.optimizePerformance', () => 
-            commandManager.optimizePerformance()),
+        vscode.commands.registerCommand('ruv-swarm.optimizePerformance', () => {
+            console.log('🎯 DEBUG: User executed command: optimizePerformance');
+            return commandManager.optimizePerformance();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.securityAnalysis', () => 
-            commandManager.securityAnalysis()),
+        vscode.commands.registerCommand('ruv-swarm.securityAnalysis', () => {
+            console.log('🎯 DEBUG: User executed command: securityAnalysis');
+            return commandManager.securityAnalysis();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.explainCode', () => 
-            commandManager.explainCode()),
+        vscode.commands.registerCommand('ruv-swarm.explainCode', () => {
+            console.log('🎯 DEBUG: User executed command: explainCode');
+            const selection = vscode.window.activeTextEditor?.selection;
+            console.log('🎯 DEBUG: Selected text range:', selection);
+            return commandManager.explainCode();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.refactorCode', () => 
-            commandManager.refactorCode()),
+        vscode.commands.registerCommand('ruv-swarm.refactorCode', () => {
+            console.log('🎯 DEBUG: User executed command: refactorCode');
+            return commandManager.refactorCode();
+        }),
         
         // Monitoring commands
-        vscode.commands.registerCommand('ruv-swarm.monitorSwarm', () => 
-            commandManager.monitorSwarm()),
+        vscode.commands.registerCommand('ruv-swarm.monitorSwarm', () => {
+            console.log('🎯 DEBUG: User executed command: monitorSwarm');
+            return commandManager.monitorSwarm();
+        }),
         
-        vscode.commands.registerCommand('ruv-swarm.benchmarkPerformance', () => 
-            commandManager.benchmarkPerformance()),
+        vscode.commands.registerCommand('ruv-swarm.benchmarkPerformance', () => {
+            console.log('🎯 DEBUG: User executed command: benchmarkPerformance');
+            return commandManager.benchmarkPerformance();
+        }),
         
-        // Dashboard command
-        vscode.commands.registerCommand('ruv-swarm.openDashboard', () => 
-            webviewProvider.showDashboard()),
+        // Dashboard commands
+        vscode.commands.registerCommand('ruv-swarm.openDashboard', () => {
+            console.log('🎯 DEBUG: User executed command: openDashboard (enhanced)');
+            return enhancedDashboard.showDashboard();
+        }),
+        
+        vscode.commands.registerCommand('ruv-swarm.openBasicDashboard', () => {
+            console.log('🎯 DEBUG: User executed command: openBasicDashboard');
+            return webviewProvider.showDashboard();
+        }),
         
         // New Phase 2 commands
         vscode.commands.registerCommand('ruv-swarm.validateCLI', async () => {
+            console.log('🎯 DEBUG: User executed command: validateCLI');
             try {
                 const result = await cliValidator.validateCLI();
+                console.log('🎯 DEBUG: CLI validation result:', result);
                 const message = result.isAvailable 
                     ? `✅ CLI is available (v${result.version}). Capabilities: ${result.capabilities.join(', ')}`
                     : `❌ CLI not available. Issues: ${result.errors.join(', ')}`;
                 
                 vscode.window.showInformationMessage(message);
             } catch (error) {
+                console.log('🎯 DEBUG: CLI validation error:', error);
                 vscode.window.showErrorMessage(`CLI validation failed: ${error}`);
             }
         }),

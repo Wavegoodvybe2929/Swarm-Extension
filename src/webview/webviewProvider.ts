@@ -46,29 +46,50 @@ export class WebviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     async showDashboard(): Promise<void> {
-        if (this.webviewView) {
-            this.webviewView.show(true);
-            await this.updateDashboard();
-        } else {
-            // Create a new webview panel if view is not available
-            const panel = vscode.window.createWebviewPanel(
-                'ruvSwarmDashboard',
-                'RUV-Swarm Dashboard',
-                vscode.ViewColumn.Two,
-                {
-                    enableScripts: true,
-                    localResourceRoots: [this.context.extensionUri]
-                }
-            );
-
-            panel.webview.html = this.getDashboardHTML();
+        try {
+            console.log('🎛️ DEBUG: showDashboard called');
             
-            panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
-                await this.handleWebviewMessage(message);
-            });
+            if (this.webviewView) {
+                console.log('🎛️ DEBUG: Using existing webview view');
+                this.webviewView.show(true);
+                await this.updateDashboard();
+            } else {
+                console.log('🎛️ DEBUG: Creating new webview panel');
+                // Create a new webview panel if view is not available
+                const panel = vscode.window.createWebviewPanel(
+                    'ruvSwarmDashboard',
+                    'RUV-Swarm Dashboard',
+                    vscode.ViewColumn.Two,
+                    {
+                        enableScripts: true,
+                        localResourceRoots: [this.context.extensionUri],
+                        retainContextWhenHidden: true
+                    }
+                );
 
-            // Update dashboard data
-            await this.updateDashboardPanel(panel);
+                console.log('🎛️ DEBUG: Setting webview HTML');
+                panel.webview.html = this.getDashboardHTML();
+                
+                panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+                    console.log('🎛️ DEBUG: Received webview message:', message.type);
+                    await this.handleWebviewMessage(message);
+                });
+
+                // Handle panel disposal
+                panel.onDidDispose(() => {
+                    console.log('🎛️ DEBUG: Dashboard panel disposed');
+                });
+
+                console.log('🎛️ DEBUG: Updating dashboard data');
+                // Update dashboard data
+                await this.updateDashboardPanel(panel);
+                
+                console.log('🎛️ DEBUG: Dashboard panel created and shown successfully');
+                vscode.window.showInformationMessage('📊 Dashboard opened successfully!');
+            }
+        } catch (error) {
+            console.error('🎛️ ERROR: Failed to show dashboard:', error);
+            vscode.window.showErrorMessage(`Failed to open dashboard: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

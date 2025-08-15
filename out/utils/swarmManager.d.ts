@@ -21,6 +21,7 @@ export declare class SwarmManager implements vscode.Disposable {
     private getWorkspaceFolder;
     private parseAgentId;
     private updatePerformanceMetrics;
+    private useFallbackMetrics;
     private emitEvent;
     dispose(): void;
 }
