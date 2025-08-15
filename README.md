@@ -1,5 +1,8 @@
 # RUV-Swarm VSCode Extension
 
+<img width="1512" height="823" alt="Screenshot 2025-08-15 at 12 29 49 PM" src="https://github.com/user-attachments/assets/c28a38ca-6b7c-4279-8e75-04b9cce96ac0" />
+
+
 **Transform VSCode into an AI-Powered Development Environment with Offline Neural Intelligence**
 
 The RUV-Swarm VSCode extension integrates ruv-swarm's offline AI agents directly into VSCode for intelligent code analysis, generation, and optimization - all running locally without external API dependencies.
