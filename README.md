@@ -1,7 +1,6 @@
 # RUV-Swarm VSCode Extension
 
-<img width="1512" height="823" alt="Screenshot 2025-08-15 at 12 29 49 PM" src="https://github.com/user-attachments/assets/c28a38ca-6b7c-4279-8e75-04b9cce96ac0" />
-
+<img width="1512" height="824" alt="Screenshot 2025-08-15 at 4 49 09 PM" src="https://github.com/user-attachments/assets/fdc66a71-47cd-4f20-acad-0c897a0a7b4d" />
 
 **Transform VSCode into an AI-Powered Development Environment with Offline Neural Intelligence**
 
