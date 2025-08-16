@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { SwarmManager } from './utils/swarmManager';
+import { HiveOrchestrator } from './hive/hiveOrchestrator';
+import { SpecificationGenerator } from './specs/specificationGenerator';
 import { CommandManager } from './commands/commandManager';
 import { DiagnosticsProvider } from './providers/diagnosticsProvider';
 import { StatusBarManager } from './utils/statusBarManager';
@@ -20,9 +22,11 @@ import { ValidationEngine } from './settings/validationEngine';
 import { SwarmStatusProvider } from './providers/swarmStatusProvider';
 import { ActiveAgentsProvider } from './providers/activeAgentsProvider';
 import { RecentAnalysisProvider } from './providers/recentAnalysisProvider';
-import { ExtensionConfig } from './types';
+import { ExtensionConfig, HiveConfig, SpecificationTask } from './types';
 
 let swarmManager: SwarmManager;
+let hiveOrchestrator: HiveOrchestrator;
+let specificationGenerator: SpecificationGenerator;
 let commandManager: CommandManager;
 let diagnosticsProvider: DiagnosticsProvider;
 let statusBarManager: StatusBarManager;
@@ -110,6 +114,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
         console.log('📊 DEBUG: Initializing ChatViewProvider...');
         chatViewProvider = new ChatViewProvider(context, lmStudioServer, swarmManager);
+
+        // Initialize Hive Mind components
+        console.log('📊 DEBUG: Initializing HiveOrchestrator...');
+        hiveOrchestrator = new HiveOrchestrator(context);
+        
+        console.log('📊 DEBUG: Initializing SpecificationGenerator...');
+        specificationGenerator = new SpecificationGenerator(lmStudioServer);
 
         // Initialize tree data providers
         console.log('📊 DEBUG: Initializing SwarmStatusProvider...');
@@ -588,6 +599,310 @@ function registerCommands(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage(`Failed to optimize settings: ${error}`);
             }
         }),
+
+        // Hive Mind commands
+        vscode.commands.registerCommand('ruv-swarm.initializeHive', async () => {
+            console.log('🎯 DEBUG: User executed command: initializeHive');
+            try {
+                const config: HiveConfig = {
+                    maxAgents: 10,
+                    memoryBankSize: '1GB',
+                    orchestrationMode: 'adaptive',
+                    topology: 'mesh',
+                    autoScale: true,
+                    minAgents: 2,
+                    maxConcurrentTasks: 5
+                };
+                
+                await hiveOrchestrator.initializeHive(config);
+                vscode.window.showInformationMessage('🧠 Hive Mind initialized successfully!');
+            } catch (error) {
+                console.error('🎯 DEBUG: Hive initialization error:', error);
+                vscode.window.showErrorMessage(`Failed to initialize Hive Mind: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.generateSpecification', async () => {
+            console.log('🎯 DEBUG: User executed command: generateSpecification');
+            try {
+                const userInput = await vscode.window.showInputBox({
+                    prompt: 'Describe what you want to build',
+                    placeHolder: 'e.g., Create a user authentication system with JWT tokens',
+                    ignoreFocusOut: true
+                });
+
+                if (!userInput) {
+                    return;
+                }
+
+                vscode.window.showInformationMessage('🔄 Generating specification...');
+                
+                const request = {
+                    userRequest: userInput,
+                    context: {
+                        workspaceFolder: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+                        activeFile: vscode.window.activeTextEditor?.document.fileName,
+                        projectType: 'general'
+                    },
+                    preferences: {
+                        complexity: 'moderate' as const,
+                        timeline: 'normal' as const,
+                        quality: 'production' as const
+                    }
+                };
+                
+                const specification = await specificationGenerator.generateSpecification(request);
+                
+                // Convert specification to markdown content
+                const markdownContent = convertSpecToMarkdown(specification);
+                
+                // Show the generated specification
+                const doc = await vscode.workspace.openTextDocument({
+                    content: markdownContent,
+                    language: 'markdown'
+                });
+                await vscode.window.showTextDocument(doc);
+                
+                vscode.window.showInformationMessage('📋 Specification generated successfully!');
+            } catch (error) {
+                console.error('🎯 DEBUG: Specification generation error:', error);
+                vscode.window.showErrorMessage(`Failed to generate specification: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.orchestrateSpecification', async () => {
+            console.log('🎯 DEBUG: User executed command: orchestrateSpecification');
+            try {
+                const activeEditor = vscode.window.activeTextEditor;
+                if (!activeEditor) {
+                    vscode.window.showErrorMessage('Please open a specification file first');
+                    return;
+                }
+
+                const specContent = activeEditor.document.getText();
+                if (!specContent.trim()) {
+                    vscode.window.showErrorMessage('Specification file is empty');
+                    return;
+                }
+
+                vscode.window.showInformationMessage('🚀 Starting hive mind orchestration...');
+                
+                // Parse the specification content
+                const specification: SpecificationTask = {
+                    id: `spec-${Date.now()}`,
+                    title: 'User Specification',
+                    description: 'Generated from user input',
+                    requirements: [],
+                    architecture: [],
+                    tasks: [],
+                    acceptanceCriteria: [],
+                    priority: 'medium' as const,
+                    estimatedDuration: 1,
+                    dependencies: []
+                };
+
+                const result = await hiveOrchestrator.orchestrateSpecification(specification);
+                
+                // Show results
+                const outputChannel = vscode.window.createOutputChannel('Hive Mind Orchestration');
+                outputChannel.clear();
+                outputChannel.appendLine('Hive Mind Orchestration Results');
+                outputChannel.appendLine('================================\n');
+                outputChannel.appendLine(`Specification: ${specification.title}`);
+                outputChannel.appendLine(`Status: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+                outputChannel.appendLine(`Agents Used: ${result.agentsUsed.join(', ')}`);
+                outputChannel.appendLine(`Execution Time: ${result.executionTime}ms\n`);
+                
+                if (result.results && result.results.length > 0) {
+                    outputChannel.appendLine('Results:');
+                    result.results.forEach((res, index) => {
+                        outputChannel.appendLine(`${index + 1}. ${res.agentType}: ${res.success ? 'SUCCESS' : 'FAILED'}`);
+                        if (res.output) {
+                            outputChannel.appendLine(`   Output: ${res.output}`);
+                        }
+                        if (res.error) {
+                            outputChannel.appendLine(`   Error: ${res.error}`);
+                        }
+                    });
+                }
+                
+                outputChannel.show();
+                
+                if (result.success) {
+                    vscode.window.showInformationMessage('✅ Hive mind orchestration completed successfully!');
+                } else {
+                    vscode.window.showWarningMessage('⚠️ Hive mind orchestration completed with issues. Check output for details.');
+                }
+            } catch (error) {
+                console.error('🎯 DEBUG: Orchestration error:', error);
+                vscode.window.showErrorMessage(`Failed to orchestrate specification: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.queryMemoryBank', async () => {
+            console.log('🎯 DEBUG: User executed command: queryMemoryBank');
+            try {
+                const query = await vscode.window.showInputBox({
+                    prompt: 'Enter your memory bank query',
+                    placeHolder: 'e.g., specifications, tasks, patterns, decisions',
+                    ignoreFocusOut: true
+                });
+
+                if (!query) {
+                    return;
+                }
+
+                const results = await hiveOrchestrator.queryMemoryBank(query);
+                
+                const outputChannel = vscode.window.createOutputChannel('Hive Mind Memory Bank');
+                outputChannel.clear();
+                outputChannel.appendLine('Hive Mind Memory Bank Query Results');
+                outputChannel.appendLine('===================================\n');
+                outputChannel.appendLine(`Query: ${query}`);
+                outputChannel.appendLine(`Results Found: ${results.length}\n`);
+                
+                if (results.length > 0) {
+                    results.forEach((result, index) => {
+                        outputChannel.appendLine(`${index + 1}. ${JSON.stringify(result, null, 2)}`);
+                        outputChannel.appendLine('');
+                    });
+                } else {
+                    outputChannel.appendLine('No results found for your query.');
+                }
+                
+                outputChannel.show();
+                vscode.window.showInformationMessage(`🧠 Found ${results.length} results in memory bank`);
+            } catch (error) {
+                console.error('🎯 DEBUG: Memory bank query error:', error);
+                vscode.window.showErrorMessage(`Failed to query memory bank: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.getHiveStatus', async () => {
+            console.log('🎯 DEBUG: User executed command: getHiveStatus');
+            try {
+                const status = await hiveOrchestrator.getHiveStatus();
+                const activeAgentsList = hiveOrchestrator.getActiveAgents();
+                
+                const outputChannel = vscode.window.createOutputChannel('Hive Mind Status');
+                outputChannel.clear();
+                outputChannel.appendLine('Hive Mind Status Report');
+                outputChannel.appendLine('=======================\n');
+                outputChannel.appendLine(`Initialized: ${status.isInitialized}`);
+                outputChannel.appendLine(`Active Agents: ${status.activeAgents}`);
+                outputChannel.appendLine(`Total Agents: ${status.totalAgents}`);
+                outputChannel.appendLine(`Memory Usage: ${status.performance.memoryUsage}%`);
+                outputChannel.appendLine(`Tasks Completed: ${status.completedTasks}`);
+                outputChannel.appendLine(`Active Tasks: ${status.activeTasks}`);
+                outputChannel.appendLine(`Health Status: ${status.health.status}\n`);
+                
+                if (activeAgentsList && activeAgentsList.length > 0) {
+                    outputChannel.appendLine('Agent Details:');
+                    activeAgentsList.forEach((agent, index: number) => {
+                        outputChannel.appendLine(`${index + 1}. ${agent.type} (${agent.id})`);
+                        outputChannel.appendLine(`   Status: ${agent.status}`);
+                        outputChannel.appendLine(`   Tasks: ${agent.performance.tasksCompleted}`);
+                        outputChannel.appendLine(`   Capabilities: ${agent.capabilities.join(', ')}`);
+                        outputChannel.appendLine('');
+                    });
+                }
+                
+                outputChannel.show();
+                
+                const statusMessage = status.isInitialized 
+                    ? `🧠 Hive Mind: ${status.activeAgents}/${status.totalAgents} agents active`
+                    : '🧠 Hive Mind: Not initialized';
+                    
+                vscode.window.showInformationMessage(statusMessage);
+            } catch (error) {
+                console.error('🎯 DEBUG: Hive status error:', error);
+                vscode.window.showErrorMessage(`Failed to get hive status: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.spawnSpecializedAgent', async () => {
+            console.log('🎯 DEBUG: User executed command: spawnSpecializedAgent');
+            try {
+                const agentType = await vscode.window.showQuickPick([
+                    { label: '🏗️ Architect', value: 'architect', description: 'System design and architecture' },
+                    { label: '💻 Coder', value: 'coder', description: 'Code implementation and development' },
+                    { label: '🧪 Tester', value: 'tester', description: 'Testing and quality assurance' },
+                    { label: '📊 Analyst', value: 'analyst', description: 'Performance and code analysis' },
+                    { label: '🔍 Researcher', value: 'researcher', description: 'Information gathering and research' }
+                ], {
+                    placeHolder: 'Select agent type to spawn',
+                    ignoreFocusOut: true
+                });
+
+                if (!agentType) {
+                    return;
+                }
+
+                vscode.window.showInformationMessage(`🚀 Spawning ${agentType.label} agent...`);
+                
+                const agent = await hiveOrchestrator.spawnSpecializedAgent(agentType.value as any);
+                
+                vscode.window.showInformationMessage(
+                    `✅ ${agentType.label} agent spawned successfully! ID: ${(agent as any).id}`
+                );
+            } catch (error) {
+                console.error('🎯 DEBUG: Agent spawn error:', error);
+                vscode.window.showErrorMessage(`Failed to spawn agent: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.terminateAgent', async () => {
+            console.log('🎯 DEBUG: User executed command: terminateAgent');
+            try {
+                const status = await hiveOrchestrator.getHiveStatus();
+                const activeAgentsList = hiveOrchestrator.getActiveAgents();
+                
+                if (!activeAgentsList || activeAgentsList.length === 0) {
+                    vscode.window.showInformationMessage('No active agents to terminate');
+                    return;
+                }
+
+                const agentOptions = activeAgentsList.map(agent => ({
+                    label: `${agent.type} (${agent.id})`,
+                    value: agent.id,
+                    description: `Status: ${agent.status}, Tasks: ${agent.performance.tasksCompleted}`
+                }));
+
+                const selectedAgent = await vscode.window.showQuickPick(agentOptions, {
+                    placeHolder: 'Select agent to terminate',
+                    ignoreFocusOut: true
+                });
+
+                if (!selectedAgent) {
+                    return;
+                }
+
+                await hiveOrchestrator.terminateAgent((selectedAgent as any).value);
+                vscode.window.showInformationMessage(`🔴 Agent ${(selectedAgent as any).value} terminated successfully`);
+            } catch (error) {
+                console.error('🎯 DEBUG: Agent termination error:', error);
+                vscode.window.showErrorMessage(`Failed to terminate agent: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand('ruv-swarm.clearMemoryBank', async () => {
+            console.log('🎯 DEBUG: User executed command: clearMemoryBank');
+            try {
+                const choice = await vscode.window.showWarningMessage(
+                    'Are you sure you want to clear the entire memory bank? This action cannot be undone.',
+                    'Clear Memory Bank',
+                    'Cancel'
+                );
+
+                if (choice === 'Clear Memory Bank') {
+                    await hiveOrchestrator.clearMemoryBank();
+                    vscode.window.showInformationMessage('🗑️ Memory bank cleared successfully');
+                }
+            } catch (error) {
+                console.error('🎯 DEBUG: Memory bank clear error:', error);
+                vscode.window.showErrorMessage(`Failed to clear memory bank: ${error}`);
+            }
+        }),
     ];
 
     // Add all commands to context subscriptions
@@ -698,6 +1013,61 @@ function handleConfigurationChange() {
             enableSIMD: true
         });
     }
+}
+
+function convertSpecToMarkdown(spec: any): string {
+    let markdown = `# ${spec.title}\n\n`;
+    markdown += `## Description\n${spec.description}\n\n`;
+    
+    if (spec.requirements && spec.requirements.length > 0) {
+        markdown += `## Requirements\n`;
+        spec.requirements.forEach((req: string, index: number) => {
+            markdown += `${index + 1}. ${req}\n`;
+        });
+        markdown += '\n';
+    }
+    
+    if (spec.architecture && spec.architecture.length > 0) {
+        markdown += `## Architecture\n`;
+        spec.architecture.forEach((arch: string) => {
+            markdown += `- ${arch}\n`;
+        });
+        markdown += '\n';
+    }
+    
+    if (spec.tasks && spec.tasks.length > 0) {
+        markdown += `## Tasks\n`;
+        spec.tasks.forEach((task: any, index: number) => {
+            markdown += `### Task ${index + 1}: ${task.description}\n`;
+            markdown += `- **Type**: ${task.type}\n`;
+            markdown += `- **Agent**: ${task.assignedAgentType}\n`;
+            markdown += `- **Duration**: ${task.estimatedDuration} hours\n`;
+            if (task.dependencies && task.dependencies.length > 0) {
+                markdown += `- **Dependencies**: ${task.dependencies.join(', ')}\n`;
+            }
+            if (task.acceptanceCriteria && task.acceptanceCriteria.length > 0) {
+                markdown += `- **Acceptance Criteria**: ${task.acceptanceCriteria.join(', ')}\n`;
+            }
+            markdown += '\n';
+        });
+    }
+    
+    if (spec.acceptanceCriteria && spec.acceptanceCriteria.length > 0) {
+        markdown += `## Acceptance Criteria\n`;
+        spec.acceptanceCriteria.forEach((criteria: string) => {
+            markdown += `- ${criteria}\n`;
+        });
+        markdown += '\n';
+    }
+    
+    markdown += `## Project Details\n`;
+    markdown += `- **Priority**: ${spec.priority}\n`;
+    markdown += `- **Estimated Duration**: ${spec.estimatedDuration} hours\n`;
+    if (spec.dependencies && spec.dependencies.length > 0) {
+        markdown += `- **Dependencies**: ${spec.dependencies.join(', ')}\n`;
+    }
+    
+    return markdown;
 }
 
 function getExtensionConfig(): ExtensionConfig {

@@ -76,6 +76,11 @@ export declare class LMStudioServer extends EventEmitter {
     private _getSwarmMetrics;
     private _testConnection;
     private _startHealthMonitoring;
+    generateCompletion(prompt: string, options?: {
+        maxTokens?: number;
+        temperature?: number;
+        stopSequences?: string[];
+    }): Promise<string>;
     dispose(): void;
 }
 //# sourceMappingURL=lmStudioServer.d.ts.map

@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 import { LMStudioServer } from '../mcp/servers/lmStudioServer';
 import { SwarmManager } from '../utils/swarmManager';
+import { HiveOrchestrator } from '../hive/hiveOrchestrator';
+import { SpecificationGenerator, SpecGenerationRequest } from '../specs/specificationGenerator';
+import { SpecificationTask } from '../types';
 
 export interface ChatMessage {
     id: string;
@@ -486,7 +489,7 @@ What would you like me to help you with?`;
     }
 
     private async updateChatUI(): Promise<void> {
-        if (!this.chatPanel) return;
+        if (!this.chatPanel) {return;}
 
         this.chatPanel.webview.postMessage({
             type: 'updateChat',

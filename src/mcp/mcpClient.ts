@@ -370,7 +370,7 @@ export class MCPClient extends EventEmitter {
     }
 
     async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-        let lastError: Error;
+        let lastError: Error | undefined;
         
         for (let attempt = 0; attempt <= this._options.retryAttempts; attempt++) {
             try {
@@ -385,7 +385,7 @@ export class MCPClient extends EventEmitter {
             }
         }
         
-        throw lastError!;
+        throw new Error(lastError?.message || 'MCP operation failed');
     }
 
     dispose(): void {

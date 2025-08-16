@@ -21,8 +21,14 @@ export declare class EnhancedDashboard implements vscode.Disposable {
     private updateInterval?;
     private isStreaming;
     private outputChannel;
+    private hiveOrchestrator?;
+    private memoryBank?;
+    private topologyManager?;
+    private loadBalancer?;
+    private faultTolerance?;
     private commandButtons;
     constructor(context: vscode.ExtensionContext, swarmManager: SwarmManager, commandManager: CommandManager);
+    private initializeHiveMind;
     showDashboard(): Promise<void>;
     private handleWebviewMessage;
     private executeCommand;

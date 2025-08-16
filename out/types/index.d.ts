@@ -19,7 +19,7 @@ export interface Agent {
     createdAt: Date;
     lastActive: Date;
 }
-export type AgentType = 'researcher' | 'coder' | 'analyst' | 'optimizer' | 'coordinator' | 'tester' | 'reviewer';
+export type AgentType = 'researcher' | 'coder' | 'analyst' | 'optimizer' | 'coordinator' | 'tester' | 'reviewer' | 'architect';
 export type AgentStatus = 'idle' | 'active' | 'busy' | 'error' | 'offline';
 export interface AgentPerformance {
     tasksCompleted: number;
@@ -209,7 +209,7 @@ export interface SwarmEvent {
     timestamp: Date;
     data: any;
 }
-export type SwarmEventType = 'swarm.initialized' | 'swarm.shutdown' | 'agent.spawned' | 'agent.terminated' | 'task.started' | 'task.completed' | 'task.failed' | 'analysis.completed' | 'performance.updated';
+export type SwarmEventType = 'swarm.initialized' | 'swarm.shutdown' | 'agent.spawned' | 'agent.terminated' | 'task.started' | 'task.completed' | 'task.failed' | 'analysis.completed' | 'performance.updated' | 'hive.initialized' | 'specification.completed';
 export declare class SwarmError extends Error {
     code: string;
     details?: any | undefined;
@@ -222,5 +222,98 @@ export declare class AgentError extends SwarmError {
 export declare class TaskError extends SwarmError {
     taskId: string;
     constructor(message: string, taskId: string, details?: any);
+}
+export interface HiveConfig {
+    maxAgents: number;
+    memoryBankSize: string;
+    orchestrationMode: 'adaptive' | 'manual' | 'auto';
+    topology: 'mesh' | 'hierarchical' | 'ring' | 'star';
+    autoScale?: boolean;
+    minAgents?: number;
+    maxConcurrentTasks?: number;
+    enableLearning?: boolean;
+    enableOptimization?: boolean;
+}
+export interface AgentCoordination {
+    strategy: 'parallel' | 'sequential' | 'adaptive' | 'hybrid';
+    loadBalancing: boolean;
+    faultTolerance: boolean;
+    maxRetries: number;
+    timeout: number;
+}
+export interface SpecificationTask {
+    id: string;
+    title: string;
+    description: string;
+    requirements: string[];
+    architecture: string[];
+    tasks: TaskDefinition[];
+    acceptanceCriteria: string[];
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    estimatedDuration: number;
+    dependencies: string[];
+}
+export interface TaskDefinition {
+    id: string;
+    type: 'design' | 'implementation' | 'testing' | 'review' | 'optimization';
+    description: string;
+    assignedAgentType: string;
+    dependencies: string[];
+    estimatedDuration: number;
+    acceptanceCriteria: string[];
+}
+export interface HiveMemoryBank {
+    initialize(): Promise<void>;
+    storeSpecification(spec: SpecificationTask): Promise<void>;
+    storeExecutionResult(specId: string, result: any): Promise<void>;
+    storeAgentCreation(agent: Agent): Promise<void>;
+    storeTaskExecution(taskId: string, agentId: string, result: any): Promise<void>;
+    getCompletedTaskCount(): Promise<number>;
+    getSize(): Promise<string>;
+    query(query: string, limit?: number): Promise<any[]>;
+    getAgentContext(agentId: string): Promise<any>;
+    checkHealth(): Promise<{
+        healthy: boolean;
+        issues: string[];
+    }>;
+    dispose(): void;
+}
+export interface SpecGenerationRequest {
+    userInput: string;
+    context?: string;
+    complexity?: 'simple' | 'medium' | 'complex';
+    domain?: string;
+}
+export interface HiveOrchestrationResult {
+    success: boolean;
+    agentsUsed: string[];
+    executionTime: number;
+    results: AgentExecutionResult[];
+    errors?: string[];
+}
+export interface AgentExecutionResult {
+    agentType: string;
+    agentId: string;
+    success: boolean;
+    output?: string;
+    error?: string;
+    duration: number;
+}
+export interface HiveStatus {
+    initialized: boolean;
+    activeAgents: number;
+    totalAgents: number;
+    memoryUsage: string;
+    tasksCompleted: number;
+    tasksFailed: number;
+    uptime: number;
+    agents: HiveAgent[];
+}
+export interface HiveAgent {
+    id: string;
+    type: AgentType;
+    status: AgentStatus;
+    tasksCompleted: number;
+    capabilities: string[];
 }
 //# sourceMappingURL=index.d.ts.map

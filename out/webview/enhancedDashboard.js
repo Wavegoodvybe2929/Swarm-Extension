@@ -35,6 +35,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EnhancedDashboard = void 0;
 const vscode = __importStar(require("vscode"));
+const hiveOrchestrator_1 = require("../hive/hiveOrchestrator");
+const sqliteMemoryBank_1 = require("../hive/sqliteMemoryBank");
+const topologyManager_1 = require("../hive/topologyManager");
+const loadBalancer_1 = require("../hive/loadBalancer");
+const faultTolerance_1 = require("../hive/faultTolerance");
 class EnhancedDashboard {
     constructor(context, swarmManager, commandManager) {
         this.isStreaming = false;
@@ -165,6 +170,35 @@ class EnhancedDashboard {
         this.commandManager = commandManager;
         this.outputChannel = vscode.window.createOutputChannel('RUV-Swarm Enhanced Dashboard');
         this.setupEventListeners();
+        this.initializeHiveMind();
+    }
+    async initializeHiveMind() {
+        try {
+            // Initialize SQLite memory bank
+            this.memoryBank = new sqliteMemoryBank_1.SQLiteMemoryBank(this.context.globalStorageUri.fsPath);
+            await this.memoryBank.initialize();
+            // Create default hive config
+            const hiveConfig = {
+                maxAgents: 10,
+                memoryBankSize: '1GB',
+                orchestrationMode: 'adaptive',
+                topology: 'hierarchical',
+                enableLearning: true,
+                enableOptimization: true
+            };
+            // Initialize topology manager
+            this.topologyManager = new topologyManager_1.TopologyManager(hiveConfig);
+            // Initialize load balancer
+            this.loadBalancer = new loadBalancer_1.LoadBalancer(this.topologyManager);
+            // Initialize fault tolerance manager
+            this.faultTolerance = new faultTolerance_1.FaultToleranceManager(this.topologyManager, this.loadBalancer);
+            // Initialize hive orchestrator
+            this.hiveOrchestrator = new hiveOrchestrator_1.HiveOrchestrator(this.context, hiveConfig);
+            this.outputChannel.appendLine('✅ Hive Mind components initialized successfully');
+        }
+        catch (error) {
+            this.outputChannel.appendLine(`⚠️ Failed to initialize Hive Mind: ${error}`);
+        }
     }
     async showDashboard() {
         try {
@@ -299,8 +333,9 @@ class EnhancedDashboard {
         });
     }
     async startRealTimeUpdates() {
-        if (this.isStreaming)
+        if (this.isStreaming) {
             return;
+        }
         this.isStreaming = true;
         this.updateInterval = setInterval(async () => {
             await this.updateDashboard();
@@ -308,8 +343,9 @@ class EnhancedDashboard {
         this.outputChannel.appendLine('🔄 Started real-time updates');
     }
     stopRealTimeUpdates() {
-        if (!this.isStreaming)
+        if (!this.isStreaming) {
             return;
+        }
         this.isStreaming = false;
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
@@ -318,8 +354,9 @@ class EnhancedDashboard {
         this.outputChannel.appendLine('⏸️ Stopped real-time updates');
     }
     async updateDashboard() {
-        if (!this.dashboardPanel)
+        if (!this.dashboardPanel) {
             return;
+        }
         try {
             this.updateCommandStates();
             const dashboardData = await this.getDashboardData();

@@ -421,7 +421,7 @@ Provide helpful, concise responses and use tools when appropriate to assist with
     }
 
     private async updateChatUI(): Promise<void> {
-        if (!this._view) return;
+        if (!this._view) {return;}
 
         this._view.webview.postMessage({
             type: 'updateChat',

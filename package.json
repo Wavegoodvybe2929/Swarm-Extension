@@ -188,16 +188,16 @@
         "title": "AI Code Review",
         "category": "RUV-Swarm"
       },
-        {
-          "command": "ruv-swarm.showWorkflowHistory",
-          "title": "Show Workflow History",
-          "category": "RUV-Swarm"
-        },
-        {
-          "command": "ruv-swarm.openLMStudioChat",
-          "title": "Open LM Studio Chat",
-          "category": "RUV-Swarm"
-        }
+      {
+        "command": "ruv-swarm.showWorkflowHistory",
+        "title": "Show Workflow History",
+        "category": "RUV-Swarm"
+      },
+      {
+        "command": "ruv-swarm.openLMStudioChat",
+        "title": "Open LM Studio Chat",
+        "category": "RUV-Swarm"
+      }
     ],
     "keybindings": [
       {
@@ -615,9 +615,25 @@
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "enum": ["analyze", "read", "generate", "explain", "review", "optimize", "search", "workspace"]
+                    "enum": [
+                      "analyze",
+                      "read",
+                      "generate",
+                      "explain",
+                      "review",
+                      "optimize",
+                      "search",
+                      "workspace"
+                    ]
                   },
-                  "default": ["analyze", "read", "generate", "explain", "review", "optimize"],
+                  "default": [
+                    "analyze",
+                    "read",
+                    "generate",
+                    "explain",
+                    "review",
+                    "optimize"
+                  ],
                   "description": "Enabled tool categories for AI model"
                 },
                 "maxConcurrentCalls": {
@@ -634,7 +650,14 @@
                 }
               },
               "default": {
-                "enabledTools": ["analyze", "read", "generate", "explain", "review", "optimize"],
+                "enabledTools": [
+                  "analyze",
+                  "read",
+                  "generate",
+                  "explain",
+                  "review",
+                  "optimize"
+                ],
                 "maxConcurrentCalls": 3,
                 "toolTimeout": 15000
               },
@@ -682,7 +705,14 @@
               "contextWindow": 8192
             },
             "tools": {
-              "enabledTools": ["analyze", "read", "generate", "explain", "review", "optimize"],
+              "enabledTools": [
+                "analyze",
+                "read",
+                "generate",
+                "explain",
+                "review",
+                "optimize"
+              ],
               "maxConcurrentCalls": 3,
               "toolTimeout": 15000
             },
@@ -701,9 +731,20 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["file-operations", "code-analysis", "project-navigation", "swarm-management", "workspace"]
+                "enum": [
+                  "file-operations",
+                  "code-analysis",
+                  "project-navigation",
+                  "swarm-management",
+                  "workspace"
+                ]
               },
-              "default": ["file-operations", "code-analysis", "project-navigation", "swarm-management"],
+              "default": [
+                "file-operations",
+                "code-analysis",
+                "project-navigation",
+                "swarm-management"
+              ],
               "description": "Enabled tool categories"
             },
             "maxFileSize": {
@@ -728,7 +769,12 @@
             }
           },
           "default": {
-            "enabledCategories": ["file-operations", "code-analysis", "project-navigation", "swarm-management"],
+            "enabledCategories": [
+              "file-operations",
+              "code-analysis",
+              "project-navigation",
+              "swarm-management"
+            ],
             "maxFileSize": 1048576,
             "maxSearchResults": 100,
             "cacheTimeout": 300000,
@@ -784,17 +830,19 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "18.x",
+    "@types/vscode": "^1.74.0",
     "@types/ws": "^8.5.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
-    "eslint": "^8.47.0",
-    "typescript": "^5.1.6",
     "@vscode/test-electron": "^2.3.4",
-    "@vscode/vsce": "^2.19.0"
+    "@vscode/vsce": "^2.19.0",
+    "eslint": "^8.47.0",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
+    "better-sqlite3": "^9.2.2",
     "uuid": "^9.0.1",
     "ws": "^8.14.0"
   },

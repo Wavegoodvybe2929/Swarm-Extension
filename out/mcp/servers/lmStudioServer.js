@@ -639,6 +639,52 @@ class LMStudioServer extends events_1.EventEmitter {
             }
         }, 30000); // Check every 30 seconds
     }
+    async generateCompletion(prompt, options) {
+        if (!this._connection.isConnected) {
+            throw new Error('Not connected to LM Studio');
+        }
+        try {
+            const url = `http://${this._config.connection.host}:${this._config.connection.port}/v1/chat/completions`;
+            const requestBody = {
+                model: this._config.model.name,
+                messages: [
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                max_tokens: options?.maxTokens || this._config.model.maxTokens,
+                temperature: options?.temperature || this._config.model.temperature,
+                stop: options?.stopSequences || []
+            };
+            this._outputChannel.appendLine(`🤖 Generating completion with ${requestBody.max_tokens} max tokens`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(this._config.connection.apiKey && {
+                        'Authorization': `Bearer ${this._config.connection.apiKey}`
+                    })
+                },
+                body: JSON.stringify(requestBody),
+                signal: AbortSignal.timeout(this._config.connection.timeout)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (!data.choices || data.choices.length === 0) {
+                throw new Error('No completion generated');
+            }
+            const completion = data.choices[0].message?.content || '';
+            this._outputChannel.appendLine(`✅ Generated completion: ${completion.length} characters`);
+            return completion;
+        }
+        catch (error) {
+            this._outputChannel.appendLine(`❌ Completion generation failed: ${error}`);
+            throw new Error(`Failed to generate completion: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
     dispose() {
         this.disconnect();
         this._outputChannel.dispose();

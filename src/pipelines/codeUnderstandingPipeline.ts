@@ -511,7 +511,7 @@ export class CodeUnderstandingPipeline {
         // Remove comments and empty lines for compression
         const compressedLines = lines.filter(line => {
             const trimmed = line.trim();
-            if (!trimmed) return false;
+            if (!trimmed) {return false;}
             
             // Language-specific comment removal
             switch (language) {

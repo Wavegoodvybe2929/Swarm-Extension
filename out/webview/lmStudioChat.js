@@ -416,8 +416,9 @@ What would you like me to help you with?`;
         }
     }
     async updateChatUI() {
-        if (!this.chatPanel)
+        if (!this.chatPanel) {
             return;
+        }
         this.chatPanel.webview.postMessage({
             type: 'updateChat',
             data: {

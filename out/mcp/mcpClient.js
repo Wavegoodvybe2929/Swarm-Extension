@@ -305,7 +305,7 @@ class MCPClient extends events_1.EventEmitter {
                 }
             }
         }
-        throw lastError;
+        throw new Error(lastError?.message || 'MCP operation failed');
     }
     dispose() {
         this._transport.dispose();

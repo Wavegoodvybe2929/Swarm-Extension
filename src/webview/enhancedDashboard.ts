@@ -2,6 +2,11 @@ import * as vscode from 'vscode';
 import { SwarmManager } from '../utils/swarmManager';
 import { CommandManager } from '../commands/commandManager';
 import { DashboardData, WebviewMessage, Agent, Task } from '../types';
+import { HiveOrchestrator } from '../hive/hiveOrchestrator';
+import { SQLiteMemoryBank } from '../hive/sqliteMemoryBank';
+import { TopologyManager } from '../hive/topologyManager';
+import { LoadBalancer } from '../hive/loadBalancer';
+import { FaultToleranceManager } from '../hive/faultTolerance';
 
 export interface CommandButton {
     id: string;
@@ -24,6 +29,11 @@ export class EnhancedDashboard implements vscode.Disposable {
     private updateInterval?: NodeJS.Timeout;
     private isStreaming = false;
     private outputChannel: vscode.OutputChannel;
+    private hiveOrchestrator?: HiveOrchestrator;
+    private memoryBank?: SQLiteMemoryBank;
+    private topologyManager?: TopologyManager;
+    private loadBalancer?: LoadBalancer;
+    private faultTolerance?: FaultToleranceManager;
 
     private commandButtons: CommandButton[] = [
         // Core Commands
@@ -162,6 +172,41 @@ export class EnhancedDashboard implements vscode.Disposable {
         this.outputChannel = vscode.window.createOutputChannel('RUV-Swarm Enhanced Dashboard');
         
         this.setupEventListeners();
+        this.initializeHiveMind();
+    }
+
+    private async initializeHiveMind(): Promise<void> {
+        try {
+            // Initialize SQLite memory bank
+            this.memoryBank = new SQLiteMemoryBank(this.context.globalStorageUri.fsPath);
+            await this.memoryBank.initialize();
+
+            // Create default hive config
+            const hiveConfig = {
+                maxAgents: 10,
+                memoryBankSize: '1GB',
+                orchestrationMode: 'adaptive' as const,
+                topology: 'hierarchical' as const,
+                enableLearning: true,
+                enableOptimization: true
+            };
+
+            // Initialize topology manager
+            this.topologyManager = new TopologyManager(hiveConfig);
+
+            // Initialize load balancer
+            this.loadBalancer = new LoadBalancer(this.topologyManager);
+
+            // Initialize fault tolerance manager
+            this.faultTolerance = new FaultToleranceManager(this.topologyManager, this.loadBalancer);
+
+            // Initialize hive orchestrator
+            this.hiveOrchestrator = new HiveOrchestrator(this.context, hiveConfig);
+
+            this.outputChannel.appendLine('✅ Hive Mind components initialized successfully');
+        } catch (error) {
+            this.outputChannel.appendLine(`⚠️ Failed to initialize Hive Mind: ${error}`);
+        }
     }
 
     async showDashboard(): Promise<void> {
@@ -328,7 +373,7 @@ export class EnhancedDashboard implements vscode.Disposable {
     }
 
     private async startRealTimeUpdates(): Promise<void> {
-        if (this.isStreaming) return;
+        if (this.isStreaming) {return;}
 
         this.isStreaming = true;
         this.updateInterval = setInterval(async () => {
@@ -339,7 +384,7 @@ export class EnhancedDashboard implements vscode.Disposable {
     }
 
     private stopRealTimeUpdates(): void {
-        if (!this.isStreaming) return;
+        if (!this.isStreaming) {return;}
 
         this.isStreaming = false;
         if (this.updateInterval) {
@@ -351,7 +396,7 @@ export class EnhancedDashboard implements vscode.Disposable {
     }
 
     private async updateDashboard(): Promise<void> {
-        if (!this.dashboardPanel) return;
+        if (!this.dashboardPanel) {return;}
 
         try {
             this.updateCommandStates();

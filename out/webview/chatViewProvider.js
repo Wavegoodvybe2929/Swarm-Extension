@@ -371,8 +371,9 @@ Provide helpful, concise responses and use tools when appropriate to assist with
         }
     }
     async updateChatUI() {
-        if (!this._view)
+        if (!this._view) {
             return;
+        }
         this._view.webview.postMessage({
             type: 'updateChat',
             data: {
